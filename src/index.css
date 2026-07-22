@@ -1,0 +1,565 @@
+/* 电路乐园全局样式 —— 黏土玩具风：奶油底、圆角、柔和阴影 */
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+:root {
+  --cream: #faf3e3;
+  --cream-2: #f2e8d0;
+  --card: #fffdf6;
+  --dark: #33312e;
+  --orange: #f0982e;
+  --orange-deep: #d97e14;
+  --navy: #33556e;
+  --red: #c24438;
+  --gold: #d9a441;
+  --shadow: 0 4px 14px rgba(90, 70, 30, 0.14);
+  --radius: 16px;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+  font-family: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', system-ui, sans-serif;
+  color: var(--dark);
+  background: var(--cream);
+  overscroll-behavior: none;
+}
+
+button {
+  font-family: inherit;
+}
+
+/* —— 窄屏提示 —— */
+.narrow-notice {
+  display: none;
+}
+@media (max-width: 767px) {
+  .narrow-notice {
+    display: flex;
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    background: var(--cream);
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 24px;
+  }
+  .app-root {
+    display: none;
+  }
+}
+
+.app-root {
+  height: 100%;
+}
+
+/* —— 通用按钮 —— */
+.btn {
+  border: none;
+  background: var(--cream-2);
+  color: var(--dark);
+  border-radius: 12px;
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 0 rgba(90, 70, 30, 0.18);
+  transition: transform 80ms ease;
+  text-decoration: none;
+  display: inline-block;
+}
+.btn:active {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+.btn.primary {
+  background: var(--orange);
+  color: #fff;
+}
+.btn.danger {
+  background: #f3d9d2;
+  color: var(--red);
+}
+
+/* —— 首页 —— */
+.home {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(circle at 15% 20%, rgba(240, 152, 46, 0.14), transparent 40%),
+    radial-gradient(circle at 85% 80%, rgba(51, 85, 110, 0.12), transparent 40%),
+    var(--cream);
+}
+.home-card {
+  text-align: center;
+  padding: 40px;
+}
+.home-logo {
+  font-size: 56px;
+}
+.home h1 {
+  font-size: 44px;
+  margin: 8px 0 4px;
+  letter-spacing: 4px;
+}
+.home-sub {
+  color: #8a7d61;
+  margin-bottom: 36px;
+}
+.home-actions {
+  display: flex;
+  gap: 24px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.mode-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 250px;
+  padding: 26px 20px;
+  border-radius: 22px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+  text-decoration: none;
+  color: var(--dark);
+  border: 3px solid transparent;
+  transition: transform 120ms ease, border-color 120ms ease;
+}
+.mode-btn:hover {
+  transform: translateY(-4px) scale(1.02);
+}
+.mode-btn.sandbox:hover {
+  border-color: var(--navy);
+}
+.mode-btn.levels:hover {
+  border-color: var(--orange);
+}
+.mode-icon {
+  font-size: 42px;
+}
+.mode-name {
+  font-size: 20px;
+  font-weight: 800;
+}
+.mode-desc {
+  font-size: 13px;
+  color: #8a7d61;
+}
+.home-tip {
+  margin-top: 34px;
+  font-size: 12px;
+  color: #b0a68d;
+}
+
+/* —— 游玩布局 —— */
+.play-layout {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.play-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 14px;
+  background: var(--card);
+  box-shadow: 0 2px 8px rgba(90, 70, 30, 0.08);
+  z-index: 5;
+}
+.play-header b {
+  font-size: 16px;
+  flex: 1;
+  text-align: center;
+}
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
+.play-body {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+.canvas-wrap {
+  flex: 1;
+  position: relative;
+  min-width: 0;
+}
+.circuit-canvas {
+  background: var(--cream);
+}
+.canvas-corner {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+}
+
+/* —— 元件抽屉 —— */
+.palette {
+  width: 116px;
+  background: var(--card);
+  box-shadow: 2px 0 8px rgba(90, 70, 30, 0.06);
+  padding: 10px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-y: auto;
+  z-index: 4;
+}
+.palette-title {
+  font-weight: 800;
+  font-size: 13px;
+  text-align: center;
+  color: #8a7d61;
+  margin-bottom: 2px;
+}
+.palette-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  background: var(--cream-2);
+  padding: 8px 4px;
+  cursor: pointer;
+}
+.palette-item.active {
+  border-color: var(--orange);
+  background: #fdeed3;
+}
+.palette-icon {
+  font-size: 22px;
+}
+.palette-name {
+  font-size: 12px;
+  font-weight: 700;
+}
+.palette-count {
+  font-size: 11px;
+  color: var(--orange-deep);
+  font-weight: 700;
+}
+.palette-tip {
+  margin-top: auto;
+  font-size: 11px;
+  color: #b0a68d;
+  line-height: 1.5;
+  padding: 4px;
+}
+
+/* —— 参数面板 —— */
+.param-panel {
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 12px;
+  margin: 10px;
+  width: 210px;
+  align-self: flex-start;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+}
+.goal-panel .param-panel {
+  width: auto;
+  margin: 10px 0 0;
+  box-shadow: none;
+  border: 1.5px dashed var(--cream-2);
+}
+.param-title {
+  font-weight: 800;
+  font-size: 15px;
+}
+.param-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.param-row input[type='range'] {
+  accent-color: var(--orange);
+}
+.param-readout {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  background: var(--cream-2);
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.param-actions {
+  display: flex;
+  gap: 8px;
+}
+.muted {
+  color: #b0a68d;
+}
+
+/* —— 可视化开关 —— */
+.viz-toggles {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: rgba(255, 253, 246, 0.92);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.viz-toggles.compact {
+  flex-direction: row;
+  gap: 12px;
+  font-size: 12px;
+}
+.viz-toggles label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+}
+.viz-toggles input {
+  accent-color: var(--orange);
+}
+
+/* —— 短路警告 —— */
+.short-banner {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 460px;
+  display: flex;
+  gap: 12px;
+  background: #fff1ec;
+  border: 2px solid var(--red);
+  border-radius: 14px;
+  padding: 12px 16px;
+  box-shadow: var(--shadow);
+  font-size: 13px;
+  z-index: 6;
+  animation: shake 500ms ease;
+}
+.short-banner p {
+  margin: 4px 0 0;
+  line-height: 1.5;
+}
+.short-icon {
+  font-size: 28px;
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(-50%); }
+  25% { transform: translateX(calc(-50% - 6px)); }
+  75% { transform: translateX(calc(-50% + 6px)); }
+}
+
+/* 电池发烫脉冲 */
+.heat-pulse {
+  animation: heat 900ms ease-in-out infinite alternate;
+}
+@keyframes heat {
+  from { opacity: 0.45; }
+  to { opacity: 0.95; }
+}
+
+/* —— 悬停卡片 —— */
+.hover-card {
+  position: absolute;
+  left: 14px;
+  top: 14px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  background: rgba(51, 49, 46, 0.88);
+  color: #fff;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 13px;
+  z-index: 6;
+  pointer-events: none;
+}
+
+/* —— 目标面板 —— */
+.goal-panel {
+  width: 250px;
+  background: var(--card);
+  box-shadow: -2px 0 8px rgba(90, 70, 30, 0.06);
+  padding: 12px;
+  overflow-y: auto;
+  font-size: 13px;
+  z-index: 4;
+}
+.goal-intro {
+  background: var(--cream-2);
+  border-radius: 12px;
+  padding: 10px 12px;
+  line-height: 1.6;
+}
+.goal-title {
+  font-weight: 800;
+  margin: 12px 0 6px;
+}
+.goal-item {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  padding: 5px 0;
+  line-height: 1.4;
+  color: #7a6f58;
+}
+.goal-item.ok {
+  color: #2c7a3f;
+  font-weight: 600;
+}
+.goal-check {
+  flex-shrink: 0;
+}
+
+/* —— 关卡选择 —— */
+.level-select {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.chapters {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px 26px 40px;
+  max-width: 900px;
+  margin: 0 auto;
+  width: 100%;
+}
+.chapter h2 {
+  font-size: 19px;
+  margin: 22px 0 10px;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.chapter h2 small {
+  font-size: 12px;
+  color: #b0a68d;
+  font-weight: 500;
+}
+.lock-tag {
+  font-size: 12px;
+  color: #b0a68d;
+  font-weight: 500;
+  margin-left: auto;
+}
+.chapter.locked .level-grid {
+  opacity: 0.55;
+}
+.level-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 12px;
+}
+.level-card {
+  background: var(--card);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-decoration: none;
+  color: var(--dark);
+  border: 2.5px solid transparent;
+  transition: transform 100ms ease;
+}
+a.level-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--orange);
+}
+.level-card.done {
+  border-color: var(--gold);
+}
+.level-card.locked {
+  cursor: default;
+  color: #b0a68d;
+}
+.level-num {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--orange-deep);
+}
+.level-title {
+  font-weight: 700;
+  font-size: 15px;
+}
+.level-stars .star {
+  color: #ddd3ba;
+  font-size: 15px;
+}
+.level-stars .star.on {
+  color: var(--gold);
+}
+
+/* —— 弹窗 —— */
+.modal-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(51, 49, 46, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+.modal {
+  background: var(--card);
+  border-radius: 20px;
+  padding: 24px 28px;
+  max-width: 420px;
+  width: calc(100% - 48px);
+  box-shadow: 0 12px 40px rgba(50, 35, 10, 0.25);
+}
+.modal h3 {
+  margin: 0 0 8px;
+  font-size: 19px;
+}
+.modal p {
+  line-height: 1.7;
+  font-size: 14px;
+}
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+.modal.celebrate {
+  text-align: center;
+}
+.celebrate-emoji {
+  font-size: 54px;
+  animation: pop 500ms ease;
+}
+@keyframes pop {
+  0% { transform: scale(0.3); }
+  70% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+.big-stars .star {
+  font-size: 40px;
+  color: #ddd3ba;
+  margin: 0 4px;
+}
+.big-stars .star.on {
+  color: var(--gold);
+  animation: pop 600ms ease;
+}
