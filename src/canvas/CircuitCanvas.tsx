@@ -46,7 +46,7 @@ interface ViewBox {
 type DragState =
   | { kind: 'pan'; startX: number; startY: number; vb: ViewBox }
   | { kind: 'move'; id: string; offX: number; offY: number }
-  | { kind: 'wire'; from: TerminalRef; toX: number; toY: number; overTerminal: TerminalRef | null }
+  | { kind: 'wire'; from: TerminalRef; toX: number; toY: number; overTerminal: TerminalRef | null; startX: number; startY: number }
   | { kind: 'slider'; id: string }
   | { kind: 'wireMid'; id: string; axis: 'x' | 'y' }
   | null;
@@ -134,7 +134,7 @@ export function CircuitCanvas({ readOnly = false }: CanvasProps) {
 
     if (termComp && !readOnly) {
       const from: TerminalRef = { comp: termComp, t: Number(target.getAttribute('data-term-idx')) };
-      setDrag({ kind: 'wire', from, toX: p.x, toY: p.y, overTerminal: null });
+      setDrag({ kind: 'wire', from, toX: p.x, toY: p.y, overTerminal: null, startX: e.clientX, startY: e.clientY });
       return;
     }
     if (compId) {
@@ -230,8 +230,14 @@ export function CircuitCanvas({ readOnly = false }: CanvasProps) {
       setGhost(null);
       return;
     }
-    if (drag?.kind === 'wire' && drag.overTerminal) {
-      store.getState().addWire(drag.from, drag.overTerminal);
+    if (drag?.kind === 'wire') {
+      if (drag.overTerminal) {
+        store.getState().addWire(drag.from, drag.overTerminal);
+      } else if (Math.hypot(e.clientX - drag.startX, e.clientY - drag.startY) < 8) {
+        // 端子上的"轻点"（没拖出导线）：当作选中该元件 —— 手指粗，
+        // 点元件常落在端子命中圈上，不能让它无声无息什么都不发生
+        store.getState().select(drag.from.comp);
+      }
     }
     // 轻点开关 = 切换通断（在 pointerup 显式处理，避免依赖被指针捕获吞掉的 onClick）
     const press = pressRef.current;
@@ -240,6 +246,15 @@ export function CircuitCanvas({ readOnly = false }: CanvasProps) {
     }
     pressRef.current = null;
     setDrag(null);
+  };
+
+  /** 手势被系统取消（滚动/来电/切走）：只清理状态，绝不落子/接线/切开关 */
+  const onPointerCancelHandler = (e: RPointerEvent<SVGSVGElement>) => {
+    pinchRef.current.delete(e.pointerId);
+    (svgRef.current as unknown as { _lastPinch?: number })._lastPinch = undefined;
+    pressRef.current = null;
+    setDrag(null);
+    setGhost(null);
   };
 
   /* —— 电势归一化（能量化端子 min/max） —— */
@@ -268,7 +283,7 @@ export function CircuitCanvas({ readOnly = false }: CanvasProps) {
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
-      onPointerCancel={onPointerUp}
+      onPointerCancel={onPointerCancelHandler}
     >
       <SharedDefs />
       <defs>

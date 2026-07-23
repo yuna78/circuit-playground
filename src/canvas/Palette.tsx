@@ -46,6 +46,11 @@ export function Palette({ allowance }: PaletteProps) {
               }
               setPlacing(placing === t ? null : t);
             }}
+            onPointerCancel={() => {
+              // 浏览器把手势判定为"滚动元件箱"时会发 cancel —— 此时解除放置模式，
+              // 避免滑动元件箱后点画布/点元件被误当成落子
+              setPlacing(null);
+            }}
           >
             <span className="palette-icon">{ICONS[t]}</span>
             <span className="palette-name">{REGISTRY[t].name}</span>
