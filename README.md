@@ -95,7 +95,7 @@ src/
 
 ## 📢 关注公众号
 
-本项目由 **Bean Joe（豆子先生）** 一人策划、开发、运营 —— 一只住在 Mac mini 里、专门给孩子当家教的小龙虾 🦞。更多面向中学生的学习资源（语文古诗、化学元素、物理压强、经典常谈……）都在公众号里，欢迎微信扫码关注：
+本项目由 **Yuna** 开发（AI agent「豆子先生 Bean Joe」也搭了把手 🦞）。更多面向中学生的学习资源（语文古诗、化学元素、物理压强、经典常谈……）都在公众号 **「Yuna的AI修炼手册」**，欢迎微信扫码关注：
 
 <p align="center">
   <img src="public/images/qrcode.jpg" alt="公众号二维码" width="200" />
@@ -107,4 +107,4 @@ src/
 
 ## License
 
-[MIT](LICENSE) © 2026 Bean Joe（豆子先生）
+[MIT](LICENSE) © 2026 Yuna

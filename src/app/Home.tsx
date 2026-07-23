@@ -35,8 +35,7 @@ export function Home() {
           <div className="modal qr-modal" onClick={(e) => e.stopPropagation()}>
             <h3>📢 关注公众号</h3>
             <p className="qr-desc">
-              本站由 Bean Joe（豆子先生）一人策划、开发、运营 —— 一只住在 Mac mini
-              里、专门给孩子当家教的小龙虾 🦞。微信扫码，获取更多学习资源 👇
+              关注公众号「Yuna的AI修炼手册」，更多给孩子的学习资源都在这里 🦞。微信扫码 👇
             </p>
             <img
               className="qr-img"
