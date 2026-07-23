@@ -24,6 +24,7 @@ import {
 } from './art';
 import { DotsLayer } from '../visualization/DotsLayer';
 import { ptsToPath, wireChannelAxis, wirePathPoints } from './wirePath';
+import { circuitViewBox, FALLBACK_W, FALLBACK_H } from './viewBox';
 
 /* —— 元件抽屉 → 画布 的放置状态（跨组件共享） —— */
 interface PlacingStore {
@@ -65,6 +66,9 @@ export function CircuitCanvas({ readOnly = false }: CanvasProps) {
   const { placing, setPlacing } = usePlacingStore();
   const svgRef = useRef<SVGSVGElement>(null);
   const [vb, setVb] = useState<ViewBox>({ x: -80, y: -160, scale: 1 });
+  /** SVG 客户端尺寸（用 ResizeObserver 追踪）。挂载首帧/布局未定时 clientWidth 可能为 0，
+   *  若直接在渲染里读 clientWidth 算 viewBox 会得到 0×0 → 整块画布空白（且无重渲染时机纠正）。 */
+  const [size, setSize] = useState({ w: FALLBACK_W, h: FALLBACK_H });
   const [drag, setDrag] = useState<DragState>(null);
   const [ghost, setGhost] = useState<{ x: number; y: number } | null>(null);
   const pinchRef = useRef<Map<number, { x: number; y: number }>>(new Map());
@@ -80,6 +84,17 @@ export function CircuitCanvas({ readOnly = false }: CanvasProps) {
     };
   };
   const snap = (v: number) => Math.round(v / GRID) * GRID;
+
+  /* —— 追踪画布尺寸：挂载即测一次，之后随窗口/面板变化重算 viewBox —— */
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (!svg) return;
+    const measure = () => setSize({ w: svg.clientWidth || FALLBACK_W, h: svg.clientHeight || FALLBACK_H });
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(svg);
+    return () => ro.disconnect();
+  }, []);
 
   /* —— 缩放 —— */
   useEffect(() => {
@@ -248,7 +263,7 @@ export function CircuitCanvas({ readOnly = false }: CanvasProps) {
       ref={svgRef}
       className="circuit-canvas"
       style={{ touchAction: 'none', width: '100%', height: '100%', display: 'block' }}
-      viewBox={`${vb.x} ${vb.y} ${(svgRef.current?.clientWidth ?? 900) / vb.scale} ${(svgRef.current?.clientHeight ?? 600) / vb.scale}`}
+      viewBox={circuitViewBox(vb.x, vb.y, vb.scale, size.w, size.h)}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
