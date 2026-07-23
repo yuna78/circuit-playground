@@ -17,6 +17,12 @@ export function ParamPanel() {
     return (
       <div className="param-panel">
         <div className="param-title">导线</div>
+        {!wire.locked && <div className="param-hint">拖动导线中段可左右 / 上下调整走线，接点不变。</div>}
+        {!wire.locked && wire.mid !== undefined && (
+          <button className="btn" onClick={() => store.getState().clearWireMid(wire.id)}>
+            ↺ 自动走线
+          </button>
+        )}
         {!wire.locked && (
           <button className="btn danger" onClick={() => store.getState().removeItem(wire.id)}>
             删除导线

@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **电路乐园（Circuit Playground）** —— 面向初中（+高中入门）孩子的互动电学教育游戏。拖元件、连线、实时解算、把电流电压变可见。纯前端 SPA，无后端，部署到 Cloudflare Pages，全中文界面。
 
-规划文档在 `openspec/changes/circuit-playground-mvp/`（proposal / design / specs / tasks）—— 改动前先读 `design.md`（7 个关键技术决策）和相关 `specs/*/spec.md`（需求与验收场景）。
+本项目用 OpenSpec 规范驱动开发。完整规划文档（proposal / design / specs / tasks）不在本仓库内，而在父级合集的 `planning/circuit-game/openspec/changes/circuit-playground-mvp/` —— 改动前如能访问，先读 `design.md`（7 个关键技术决策）和相关 `specs/*/spec.md`（需求与验收场景）。开源仓库单独 clone 时以本文件与 `README.md` 的架构说明为准。
 
 ## 常用命令
 

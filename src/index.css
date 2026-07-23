@@ -161,6 +161,48 @@ button {
   color: #b0a68d;
 }
 
+/* —— 公众号入口 —— */
+.wechat-btn {
+  margin-top: 18px;
+  padding: 9px 18px;
+  border: none;
+  border-radius: 999px;
+  background: var(--orange);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  transition: background 150ms ease, transform 100ms ease;
+}
+.wechat-btn:hover {
+  background: var(--orange-deep);
+}
+.wechat-btn:active {
+  transform: translateY(1px);
+}
+.wechat-btn.ghost {
+  background: var(--cream-2);
+  color: var(--dark);
+  box-shadow: none;
+}
+.qr-modal {
+  text-align: center;
+}
+.qr-desc {
+  color: #6f6752;
+  margin: 4px 0 16px;
+}
+.qr-img {
+  width: 200px;
+  max-width: 70%;
+  border-radius: 12px;
+  border: 4px solid var(--cream-2);
+}
+.qr-modal .modal-actions {
+  justify-content: center;
+}
+
 /* —— 游玩布局 —— */
 .play-layout {
   height: 100%;
@@ -281,6 +323,11 @@ button {
 .param-title {
   font-weight: 800;
   font-size: 15px;
+}
+.param-hint {
+  font-size: 12px;
+  color: #8a7f66;
+  line-height: 1.4;
 }
 .param-row {
   display: flex;

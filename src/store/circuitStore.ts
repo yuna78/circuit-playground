@@ -42,6 +42,8 @@ interface CircuitStore {
   toggleSwitch: (id: string) => void;
   setSlider: (id: string, v: number) => void;
   addWire: (a: TerminalRef, b: TerminalRef) => void;
+  setWireMid: (id: string, axis: 'x' | 'y', value: number) => void;
+  clearWireMid: (id: string) => void;
   repairAll: () => void;
 
   /* —— 交互状态 —— */
@@ -167,6 +169,27 @@ export const useCircuitStore = create<CircuitStore>((set, get) => {
       if (dup) return;
       const wire: Wire = { id: newId('w'), a, b };
       commit({ ...doc, wires: [...doc.wires, wire] });
+    },
+    // 手动走线只改几何，不影响电学 → 直接更新 doc，保留现有 result（避免拖动时反复重解）
+    setWireMid: (id, axis, value) => {
+      const { doc } = get();
+      set({
+        doc: {
+          ...doc,
+          wires: doc.wires.map((w) => (w.id === id ? { ...w, mid: value, midAxis: axis } : w)),
+        },
+      });
+    },
+    clearWireMid: (id) => {
+      const { doc } = get();
+      set({
+        doc: {
+          ...doc,
+          wires: doc.wires.map((w) =>
+            w.id === id ? { ...w, mid: undefined, midAxis: undefined } : w,
+          ),
+        },
+      });
     },
     repairAll: () => {
       const { doc } = get();

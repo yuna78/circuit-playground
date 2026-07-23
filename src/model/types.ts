@@ -48,6 +48,10 @@ export interface Wire {
   a: TerminalRef;
   b: TerminalRef;
   locked?: boolean;
+  /** 手动走线：通道坐标覆盖值（配合 midAxis）。未设置时由布线算法自动决定 */
+  mid?: number;
+  /** mid 作用的轴：'x' = 竖直通道左右移，'y' = 水平通道上下移 */
+  midAxis?: 'x' | 'y';
 }
 
 export interface CircuitDoc {

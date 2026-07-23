@@ -23,7 +23,7 @@ import {
   SwitchArt,
 } from './art';
 import { DotsLayer } from '../visualization/DotsLayer';
-import { ptsToPath, wirePathPoints } from './wirePath';
+import { ptsToPath, wireChannelAxis, wirePathPoints } from './wirePath';
 
 /* —— 元件抽屉 → 画布 的放置状态（跨组件共享） —— */
 interface PlacingStore {
@@ -47,6 +47,7 @@ type DragState =
   | { kind: 'move'; id: string; offX: number; offY: number }
   | { kind: 'wire'; from: TerminalRef; toX: number; toY: number; overTerminal: TerminalRef | null }
   | { kind: 'slider'; id: string }
+  | { kind: 'wireMid'; id: string; axis: 'x' | 'y' }
   | null;
 
 export interface CanvasProps {
@@ -67,6 +68,8 @@ export function CircuitCanvas({ readOnly = false }: CanvasProps) {
   const [drag, setDrag] = useState<DragState>(null);
   const [ghost, setGhost] = useState<{ x: number; y: number } | null>(null);
   const pinchRef = useRef<Map<number, { x: number; y: number }>>(new Map());
+  /** 按下某元件时记录，用于在 pointerup 判定"轻点"（开关切换靠它，而非脆弱的 onClick） */
+  const pressRef = useRef<{ id: string; type: ComponentType; x: number; y: number; moved: boolean } | null>(null);
 
   /** 屏幕坐标 → SVG 坐标 */
   const toSvg = (clientX: number, clientY: number) => {
@@ -127,6 +130,8 @@ export function CircuitCanvas({ readOnly = false }: CanvasProps) {
         setDrag({ kind: 'slider', id: compId });
         return;
       }
+      // 记录按下，用于 pointerup 的"轻点"判定（开关切换）
+      pressRef.current = { id: compId, type: comp.type, x: e.clientX, y: e.clientY, moved: false };
       if (!readOnly && !comp.locked) {
         setDrag({ kind: 'move', id: compId, offX: p.x - comp.x * GRID, offY: p.y - comp.y * GRID });
       }
@@ -134,7 +139,13 @@ export function CircuitCanvas({ readOnly = false }: CanvasProps) {
     }
     const wireEl = target.closest('[data-wire-id]');
     if (wireEl) {
-      store.getState().select(wireEl.getAttribute('data-wire-id'));
+      const id = wireEl.getAttribute('data-wire-id')!;
+      store.getState().select(id);
+      const w = doc.wires.find((x) => x.id === id);
+      if (w && !w.locked && !readOnly) {
+        const axis = wireChannelAxis(doc, w);
+        if (axis) setDrag({ kind: 'wireMid', id, axis });
+      }
       return;
     }
     // 空白：取消选择 + 平移
@@ -156,6 +167,12 @@ export function CircuitCanvas({ readOnly = false }: CanvasProps) {
         setVb((v) => ({ ...v, scale: Math.min(2.5, Math.max(0.45, v.scale * (dist / prev))) }));
       }
       return;
+    }
+    // 记录是否已构成"真正的拖动"（超过阈值则不算轻点）
+    if (pressRef.current && !pressRef.current.moved) {
+      if (Math.hypot(e.clientX - pressRef.current.x, e.clientY - pressRef.current.y) > 4) {
+        pressRef.current.moved = true;
+      }
     }
     const p = toSvg(e.clientX, e.clientY);
     if (placing) {
@@ -181,6 +198,9 @@ export function CircuitCanvas({ readOnly = false }: CanvasProps) {
         const local = toLocal(comp, p.x, p.y);
         store.getState().setSlider(drag.id, (local.x - 12) / 40);
       }
+    } else if (drag.kind === 'wireMid') {
+      // 拖动导线通道：沿轴吸附到网格，端点不动
+      store.getState().setWireMid(drag.id, drag.axis, snap(drag.axis === 'x' ? p.x : p.y));
     }
   };
 
@@ -197,6 +217,12 @@ export function CircuitCanvas({ readOnly = false }: CanvasProps) {
     if (drag?.kind === 'wire' && drag.overTerminal) {
       store.getState().addWire(drag.from, drag.overTerminal);
     }
+    // 轻点开关 = 切换通断（在 pointerup 显式处理，避免依赖被指针捕获吞掉的 onClick）
+    const press = pressRef.current;
+    if (press && !press.moved && press.type === 'switch' && !readOnly) {
+      store.getState().toggleSwitch(press.id);
+    }
+    pressRef.current = null;
     setDrag(null);
   };
 
@@ -244,8 +270,10 @@ export function CircuitCanvas({ readOnly = false }: CanvasProps) {
           const kA = terminalKey(w.a);
           const color = viz.potential ? potentialColor(potT(kA)) : PALETTE.copper;
           const selected = selection === w.id;
+          const axis = w.locked || readOnly ? null : wireChannelAxis(doc, w);
+          const cursor = axis === 'x' ? 'ew-resize' : axis === 'y' ? 'ns-resize' : 'pointer';
           return (
-            <g key={w.id} data-wire-id={w.id}>
+            <g key={w.id} data-wire-id={w.id} style={{ cursor }}>
               <path d={ptsToPath(pts)} stroke="transparent" strokeWidth={14} fill="none" />
               <path
                 d={ptsToPath(pts)}
@@ -401,19 +429,15 @@ function ComponentView({
   const def = REGISTRY[comp.type];
   const k0 = terminalKey({ comp: comp.id, t: 0 });
   const k1 = terminalKey({ comp: comp.id, t: 1 });
-
-  const onClick = () => {
-    if (comp.type === 'switch' && !readOnly) store.getState().toggleSwitch(comp.id);
-  };
+  void readOnly; // 交互（移动/开关）在画布指针处理里统一判定
 
   return (
     <g
       data-comp-id={comp.id}
       transform={`translate(${comp.x * GRID} ${comp.y * GRID}) rotate(${comp.rot})`}
-      onClick={onClick}
       onPointerEnter={() => store.getState().setHovered(comp.id)}
       onPointerLeave={() => store.getState().setHovered(null)}
-      style={{ cursor: comp.locked ? 'default' : 'grab' }}
+      style={{ cursor: comp.locked ? 'pointer' : 'grab' }}
     >
       {/* 命中区域 */}
       <rect x={-6} y={-40} width={GRID * 4 + 12} height={64} fill="transparent" />

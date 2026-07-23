@@ -1,8 +1,11 @@
 /** 首页：标题 + 双模式入口 */
 
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 export function Home() {
+  const [showQr, setShowQr] = useState(false);
+
   return (
     <div className="home">
       <div className="home-card">
@@ -22,7 +25,37 @@ export function Home() {
           </Link>
         </div>
         <p className="home-tip">建议使用平板（横屏）或电脑打开</p>
+        <button className="wechat-btn" onClick={() => setShowQr(true)}>
+          📢 关注公众号
+        </button>
       </div>
+
+      {showQr && (
+        <div className="modal-mask" onClick={() => setShowQr(false)}>
+          <div className="modal qr-modal" onClick={(e) => e.stopPropagation()}>
+            <h3>📢 关注公众号</h3>
+            <p className="qr-desc">
+              本站由 Bean Joe（豆子先生）一人策划、开发、运营 —— 一只住在 Mac mini
+              里、专门给孩子当家教的小龙虾 🦞。微信扫码，获取更多学习资源 👇
+            </p>
+            <img
+              className="qr-img"
+              src="/images/qrcode.jpg"
+              alt="公众号二维码"
+              loading="lazy"
+              onError={(e) => {
+                e.currentTarget.src =
+                  'https://lobster-daily-challenge.pages.dev/images/qrcode.jpg';
+              }}
+            />
+            <div className="modal-actions">
+              <button className="wechat-btn ghost" onClick={() => setShowQr(false)}>
+                关闭
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
