@@ -11,11 +11,16 @@
 </p>
 
 <p align="center">
+  <b>🎮 在线试用 Live Demo → <a href="https://circuit-playground.pages.dev">circuit-playground.pages.dev</a></b>
+</p>
+
+<p align="center">
+  <a href="https://circuit-playground.pages.dev"><img src="https://img.shields.io/badge/▶_在线试用-Live_Demo-2e9e6b" alt="Live Demo" /></a>
   <img src="https://img.shields.io/badge/license-MIT-f0982e" alt="MIT" />
   <img src="https://img.shields.io/badge/React-19-33556e" alt="React 19" />
   <img src="https://img.shields.io/badge/TypeScript-strict-33556e" alt="TypeScript" />
   <img src="https://img.shields.io/badge/Vite-8-f0982e" alt="Vite" />
-  <img src="https://img.shields.io/badge/tests-23%20passing-2e9e6b" alt="tests" />
+  <img src="https://img.shields.io/badge/tests-28%20passing-2e9e6b" alt="tests" />
   <img src="https://img.shields.io/badge/lang-中文-c24438" alt="中文" />
 </p>
 
