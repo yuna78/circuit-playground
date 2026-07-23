@@ -24,7 +24,7 @@ export function Home() {
             <span className="mode-desc">从点亮第一盏灯开始，一步步成为电学高手</span>
           </Link>
         </div>
-        <p className="home-tip">建议使用平板（横屏）或电脑打开</p>
+        <p className="home-tip">手机、平板、电脑都能玩，大屏体验更佳 ✨</p>
         <button className="wechat-btn" onClick={() => setShowQr(true)}>
           📢 关注公众号
         </button>

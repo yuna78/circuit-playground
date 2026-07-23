@@ -34,27 +34,6 @@ button {
   font-family: inherit;
 }
 
-/* —— 窄屏提示 —— */
-.narrow-notice {
-  display: none;
-}
-@media (max-width: 767px) {
-  .narrow-notice {
-    display: flex;
-    position: fixed;
-    inset: 0;
-    z-index: 999;
-    background: var(--cream);
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 24px;
-  }
-  .app-root {
-    display: none;
-  }
-}
-
 .app-root {
   height: 100%;
 }
@@ -609,4 +588,128 @@ a.level-card:hover {
 .big-stars .star.on {
   color: var(--gold);
   animation: pop 600ms ease;
+}
+
+/* ============================================================
+   手机适配（≤ 767px，含竖屏）
+   思路：画布占满剩余空间；元件箱变底部横向滚动条；
+   参数面板变底部浮层（沙盒）；关卡目标变顶部卡片。
+   ============================================================ */
+@media (max-width: 767px) {
+  /* —— 首页：双模式按钮竖排铺满 —— */
+  .home-card {
+    padding: 28px 20px;
+  }
+  .home h1 {
+    font-size: 34px;
+  }
+  .mode-btn {
+    width: 100%;
+    max-width: 320px;
+    padding: 20px 18px;
+  }
+  .home-actions {
+    gap: 14px;
+    width: 100%;
+  }
+
+  /* —— 游玩头部更紧凑 —— */
+  .play-header {
+    padding: 8px 10px;
+    gap: 8px;
+  }
+  .play-header b {
+    font-size: 14px;
+  }
+  .btn {
+    padding: 7px 11px;
+    font-size: 13px;
+  }
+
+  /* —— 主体竖排：画布在上占满，元件箱在下 —— */
+  .play-body {
+    flex-direction: column;
+    position: relative;
+  }
+  .canvas-wrap {
+    order: 1;
+    flex: 1;
+    min-height: 0;
+  }
+
+  /* 元件箱 → 底部横向滚动条 */
+  .palette {
+    order: 2;
+    flex-direction: row;
+    width: auto;
+    max-height: none;
+    padding: 6px 8px;
+    gap: 6px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    box-shadow: 0 -2px 8px rgba(90, 70, 30, 0.1);
+    -webkit-overflow-scrolling: touch;
+  }
+  .palette-title,
+  .palette-tip {
+    display: none;
+  }
+  .palette-item {
+    flex: 0 0 auto;
+    min-width: 58px;
+    padding: 5px 6px;
+  }
+  .palette-icon {
+    font-size: 20px;
+  }
+  .palette-name {
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  /* 可视化开关移到画布左下，避免挡住底部元件箱右下角 */
+  .canvas-corner {
+    left: 10px;
+    right: auto;
+    bottom: 10px;
+  }
+
+  /* 参数面板（沙盒里是 play-body 直接子级）→ 底部浮层 */
+  .play-body > .param-panel {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: auto;
+    margin: 0;
+    max-height: 46vh;
+    overflow-y: auto;
+    border-radius: 18px 18px 0 0;
+    box-shadow: 0 -8px 24px rgba(50, 35, 10, 0.2);
+    z-index: 20;
+    padding: 14px 16px calc(14px + env(safe-area-inset-bottom));
+  }
+
+  /* 关卡目标面板 → 顶部卡片浮层（含其中的参数面板，随卡片一起滚动） */
+  .goal-panel {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    width: auto;
+    max-height: 40vh;
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    z-index: 15;
+  }
+  .goal-panel .param-panel {
+    margin-top: 10px;
+  }
+}
+
+/* 横屏矮小屏（手机横放）：目标卡片别占太高 */
+@media (max-width: 900px) and (orientation: landscape) and (max-height: 500px) {
+  .goal-panel {
+    max-height: 72vh;
+  }
 }
