@@ -13,10 +13,19 @@ export function ParamPanel() {
   const comp = doc.components.find((c) => c.id === selection);
   const wire = doc.wires.find((w) => w.id === selection);
 
+  const closeBtn = (
+    <button className="param-close" aria-label="关闭" onClick={() => store.getState().select(null)}>
+      ✕
+    </button>
+  );
+
   if (wire) {
     return (
       <div className="param-panel">
-        <div className="param-title">导线</div>
+        <div className="param-title-row">
+          <div className="param-title">导线</div>
+          {closeBtn}
+        </div>
         {!wire.locked && <div className="param-hint">拖动导线中段可左右 / 上下调整走线，接点不变。</div>}
         <div className="param-actions">
           {!wire.locked && wire.mid !== undefined && (
@@ -39,7 +48,10 @@ export function ParamPanel() {
 
   return (
     <div className="param-panel">
-      <div className="param-title">{def.name}</div>
+      <div className="param-title-row">
+        <div className="param-title">{def.name}</div>
+        {closeBtn}
+      </div>
       {def.params.map((p) => (
         <label key={p.key} className="param-row">
           <span>

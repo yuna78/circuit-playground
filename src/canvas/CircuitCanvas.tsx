@@ -163,8 +163,9 @@ export function CircuitCanvas({ readOnly = false }: CanvasProps) {
       }
       return;
     }
-    // 空白：取消选择 + 平移
+    // 空白：取消选择 + 平移（触摸端没有 pointerleave，顺带清掉悬停，收起数值卡片）
     store.getState().select(null);
+    store.getState().setHovered(null);
     setDrag({ kind: 'pan', startX: e.clientX, startY: e.clientY, vb });
   };
 

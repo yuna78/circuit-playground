@@ -305,9 +305,29 @@ button {
   box-shadow: none;
   border: 1.5px dashed var(--cream-2);
 }
+.param-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
 .param-title {
   font-weight: 800;
   font-size: 15px;
+}
+.param-close {
+  border: none;
+  background: var(--cream-2);
+  color: #8a7d61;
+  border-radius: 8px;
+  width: 28px;
+  height: 28px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.param-close:active {
+  background: #e5d9bc;
 }
 .param-hint {
   font-size: 12px;
@@ -643,9 +663,9 @@ a.level-card:hover {
     min-height: 0;
   }
 
-  /* 元件箱 → 底部横向滚动条 */
+  /* 元件箱 → 底部横向滚动条（参数卡片插在它和画布之间，order 2） */
   .palette {
-    order: 2;
+    order: 3;
     flex-direction: row;
     width: auto;
     max-height: none;
@@ -675,31 +695,30 @@ a.level-card:hover {
     white-space: nowrap;
   }
 
-  /* 可视化开关移到画布左下，避免挡住底部元件箱右下角 */
+  /* 可视化开关移到画布右上 —— 底部会被参数卡片顶起，右上永远可达（可随时反选） */
   .canvas-corner {
-    left: 10px;
-    right: auto;
-    bottom: 10px;
+    top: 10px;
+    right: 10px;
+    bottom: auto;
+    left: auto;
   }
 
-  /* 参数面板（沙盒里是 play-body 直接子级）→ 底部浮层 */
+  /* 参数面板（沙盒里是 play-body 直接子级）→ 元件箱上方的内嵌卡片，
+     占布局空间而非浮层，保证元件箱始终可见可点 */
   .play-body > .param-panel {
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    order: 2;
     width: auto;
     margin: 0;
-    max-height: 46vh;
+    align-self: stretch;
+    max-height: 40vh;
     overflow-y: auto;
     border-radius: 18px 18px 0 0;
     box-shadow: 0 -8px 24px rgba(50, 35, 10, 0.2);
     z-index: 20;
-    padding: 14px 16px calc(14px + env(safe-area-inset-bottom));
+    padding: 12px 16px;
   }
-  /* 浮层盖住元件箱：把 旋转/删除 挪到浮层顶部（标题旁），底部只留只读数据条 ——
-     避免用户凭肌肉记忆去点"原元件箱位置"时误触删除 */
-  .play-body > .param-panel .param-title {
+  /* 标题行（含 ✕）与 旋转/删除 排在卡片顶部，方便单手操作 */
+  .play-body > .param-panel .param-title-row {
     order: -2;
   }
   .play-body > .param-panel .param-actions {
