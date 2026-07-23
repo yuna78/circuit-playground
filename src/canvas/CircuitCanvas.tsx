@@ -120,8 +120,20 @@ export function CircuitCanvas({ readOnly = false }: CanvasProps) {
   }, []);
 
   /* —— 指针事件 —— */
+  /** 清理"死指针"：iOS 偶尔吞掉 up/cancel（重排/系统手势），残留条目会把
+   *  单指误判成双指捏合（单指滑动变成缩放）。每个真实指针都被画布捕获，
+   *  指针结束时捕获自动释放 —— 据此甄别并剔除幽灵条目。 */
+  const prunePinch = (currentId: number) => {
+    for (const id of [...pinchRef.current.keys()]) {
+      if (id !== currentId && !svgRef.current!.hasPointerCapture(id)) {
+        pinchRef.current.delete(id);
+      }
+    }
+  };
+
   const onPointerDown = (e: RPointerEvent<SVGSVGElement>) => {
     svgRef.current!.setPointerCapture(e.pointerId);
+    prunePinch(e.pointerId);
     pinchRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (pinchRef.current.size >= 2) return; // 进入捏合，交给 move 处理
     const target = e.target as SVGElement;
@@ -170,6 +182,7 @@ export function CircuitCanvas({ readOnly = false }: CanvasProps) {
   };
 
   const onPointerMove = (e: RPointerEvent<SVGSVGElement>) => {
+    prunePinch(e.pointerId);
     if (pinchRef.current.has(e.pointerId)) {
       pinchRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     }
