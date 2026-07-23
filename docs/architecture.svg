@@ -1,0 +1,97 @@
+<svg width="1240" height="600" viewBox="0 0 1240 600" xmlns="http://www.w3.org/2000/svg" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',system-ui,sans-serif">
+  <defs>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#5a461e" flood-opacity="0.16"/>
+    </filter>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="8" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#b89a5e"/>
+    </marker>
+    <marker id="arrowNavy" markerWidth="12" markerHeight="12" refX="8" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#33556e"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1240" height="600" fill="#faf3e3"/>
+
+  <text x="60" y="58" font-size="30" font-weight="800" fill="#33312e">电路乐园 · 架构与数据流</text>
+  <text x="60" y="88" font-size="16" fill="#8a7d61">任何画布编辑 → 同步重解 → 渲染。解算内核是与 UI 解耦的纯函数模块，可独立单测。</text>
+
+  <!-- 主管线 4 个盒子 -->
+  <!-- A CircuitDoc -->
+  <g filter="url(#soft)">
+    <rect x="60" y="130" width="230" height="96" rx="18" fill="#fffdf6" stroke="#e7dcc0" stroke-width="2"/>
+  </g>
+  <text x="175" y="168" font-size="20" font-weight="800" fill="#33556e" text-anchor="middle">CircuitDoc</text>
+  <text x="175" y="196" font-size="14" fill="#6f6752" text-anchor="middle">画布数据 · 可 JSON 序列化</text>
+  <text x="175" y="215" font-size="12" fill="#a89a78" text-anchor="middle">画布 / 存档 / 关卡预置共用</text>
+
+  <!-- B store -->
+  <g filter="url(#soft)">
+    <rect x="350" y="130" width="210" height="96" rx="18" fill="#fffdf6" stroke="#e7dcc0" stroke-width="2"/>
+  </g>
+  <text x="455" y="168" font-size="20" font-weight="800" fill="#33556e" text-anchor="middle">store (Zustand)</text>
+  <text x="455" y="196" font-size="14" fill="#6f6752" text-anchor="middle">commit() 同步重解</text>
+  <text x="455" y="215" font-size="12" fill="#a89a78" text-anchor="middle">熔断结果落回文档</text>
+
+  <!-- C solver -->
+  <g filter="url(#soft)">
+    <rect x="620" y="130" width="220" height="96" rx="18" fill="#f0982e" stroke="#d97e14" stroke-width="2"/>
+  </g>
+  <text x="730" y="170" font-size="21" font-weight="800" fill="#fff" text-anchor="middle">solver</text>
+  <text x="730" y="198" font-size="14" fill="#fff5e6" text-anchor="middle">纯函数解算内核</text>
+  <text x="730" y="217" font-size="12" fill="#ffe9cc" text-anchor="middle">可单测 · 与 UI 解耦</text>
+
+  <!-- D render -->
+  <g filter="url(#soft)">
+    <rect x="900" y="130" width="230" height="96" rx="18" fill="#fffdf6" stroke="#e7dcc0" stroke-width="2"/>
+  </g>
+  <text x="1015" y="168" font-size="20" font-weight="800" fill="#33556e" text-anchor="middle">canvas + 可视化</text>
+  <text x="1015" y="196" font-size="14" fill="#6f6752" text-anchor="middle">读 SolveResult 渲染</text>
+  <text x="1015" y="215" font-size="12" fill="#a89a78" text-anchor="middle">SVG 画布 · rAF 动画</text>
+
+  <!-- 主管线箭头 -->
+  <line x1="292" y1="178" x2="344" y2="178" stroke="#b89a5e" stroke-width="3" marker-end="url(#arrow)"/>
+  <line x1="562" y1="178" x2="614" y2="178" stroke="#b89a5e" stroke-width="3" marker-end="url(#arrow)"/>
+  <line x1="842" y1="178" x2="894" y2="178" stroke="#b89a5e" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <!-- 回环：SolveResult 落回 store（熔断） -->
+  <path d="M730 226 C 730 270, 455 270, 455 232" fill="none" stroke="#c24438" stroke-width="2.5" stroke-dasharray="6 5" marker-end="url(#arrowNavy)"/>
+  <text x="592" y="285" font-size="12.5" fill="#c24438" text-anchor="middle">熔断改变拓扑 → 迭代重解</text>
+
+  <!-- solver 内部展开 -->
+  <line x1="730" y1="300" x2="730" y2="336" stroke="#d97e14" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <g filter="url(#soft)">
+    <rect x="120" y="350" width="300" height="150" rx="18" fill="#fffdf6" stroke="#f0cf9a" stroke-width="2"/>
+  </g>
+  <text x="270" y="384" font-size="18" font-weight="800" fill="#33556e" text-anchor="middle">netlist</text>
+  <text x="270" y="412" font-size="13.5" fill="#6f6752" text-anchor="middle">CircuitDoc → 抽象网表</text>
+  <text x="270" y="436" font-size="13" fill="#8a7d61" text-anchor="middle">union-find 合并理想导体节点</text>
+  <text x="270" y="458" font-size="13" fill="#8a7d61" text-anchor="middle">电压源短路预检测</text>
+  <text x="270" y="482" font-size="12" fill="#a89a78" text-anchor="middle">导线/闭合开关/电流表 = 节点合并</text>
+
+  <g filter="url(#soft)">
+    <rect x="460" y="350" width="300" height="150" rx="18" fill="#fffdf6" stroke="#f0cf9a" stroke-width="2"/>
+  </g>
+  <text x="610" y="384" font-size="18" font-weight="800" fill="#33556e" text-anchor="middle">mna</text>
+  <text x="610" y="412" font-size="13.5" fill="#6f6752" text-anchor="middle">改进节点分析 + 高斯消元</text>
+  <text x="610" y="436" font-size="13" fill="#8a7d61" text-anchor="middle">按连通子网独立求解</text>
+  <text x="610" y="458" font-size="13" fill="#8a7d61" text-anchor="middle">电压表 10MΩ · 电流表 0V 源</text>
+  <text x="610" y="482" font-size="12" fill="#a89a78" text-anchor="middle">无源子网电流恒 0</text>
+
+  <g filter="url(#soft)">
+    <rect x="800" y="350" width="320" height="150" rx="18" fill="#fffdf6" stroke="#f0cf9a" stroke-width="2"/>
+  </g>
+  <text x="960" y="384" font-size="18" font-weight="800" fill="#33556e" text-anchor="middle">solve（编排器）</text>
+  <text x="960" y="412" font-size="13.5" fill="#6f6752" text-anchor="middle">编译 → 求解 → 算量值</text>
+  <text x="960" y="436" font-size="13" fill="#8a7d61" text-anchor="middle">过载熔断迭代重解</text>
+  <text x="960" y="458" font-size="13" fill="#8a7d61" text-anchor="middle">导线电流后处理（生成树分配）</text>
+  <text x="960" y="482" font-size="12" fill="#a89a78" text-anchor="middle">→ SolveResult</text>
+
+  <!-- 内部箭头 -->
+  <line x1="422" y1="425" x2="456" y2="425" stroke="#d97e14" stroke-width="3" marker-end="url(#arrow)"/>
+  <line x1="762" y1="425" x2="796" y2="425" stroke="#d97e14" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <!-- solve → 渲染输出 上行虚线 -->
+  <path d="M1015 350 C 1015 320, 1015 300, 1015 232" fill="none" stroke="#b89a5e" stroke-width="2.5" stroke-dasharray="6 5" marker-end="url(#arrowNavy)"/>
+</svg>
