@@ -36,6 +36,14 @@ export function Palette({ allowance }: PaletteProps) {
             className={`palette-item ${placing === t ? 'active' : ''}`}
             onPointerDown={(e) => {
               e.preventDefault();
+              // 触摸端有"隐式指针捕获"：捕获落在 pointerdown 的 target（可能是按钮内的
+              // 图标/文字 span）上，后续 move/up 全发给它，画布收不到。释放后事件按命中
+              // 测试分发 —— 手指拖到画布上，画布的 move 画 ghost、up 落子，从而同时支持
+              // "点选再点画布"与"按住直接拖入画布"两种手势。
+              const captor = e.target as Element;
+              if (captor.hasPointerCapture?.(e.pointerId)) {
+                captor.releasePointerCapture(e.pointerId);
+              }
               setPlacing(placing === t ? null : t);
             }}
           >

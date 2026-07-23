@@ -187,6 +187,10 @@ button {
   height: 100%;
   display: flex;
   flex-direction: column;
+  /* 拖元件/连线时禁止系统把手势当成"选择文本"（手机上会整页泛蓝且中断拖拽） */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 .play-header {
   display: flex;
@@ -254,6 +258,8 @@ button {
   background: var(--cream-2);
   padding: 8px 4px;
   cursor: pointer;
+  /* 侧栏（纵向滚动）：纵向滑=滚动，横向拖出=指针事件（拖入画布） */
+  touch-action: pan-y;
 }
 .palette-item.active {
   border-color: var(--orange);
@@ -658,6 +664,8 @@ a.level-card:hover {
     flex: 0 0 auto;
     min-width: 58px;
     padding: 5px 6px;
+    /* 底栏（横向滚动）：横向滑=滚动，纵向拖出=指针事件（拖入画布） */
+    touch-action: pan-x;
   }
   .palette-icon {
     font-size: 20px;
@@ -688,6 +696,14 @@ a.level-card:hover {
     box-shadow: 0 -8px 24px rgba(50, 35, 10, 0.2);
     z-index: 20;
     padding: 14px 16px calc(14px + env(safe-area-inset-bottom));
+  }
+  /* 浮层盖住元件箱：把 旋转/删除 挪到浮层顶部（标题旁），底部只留只读数据条 ——
+     避免用户凭肌肉记忆去点"原元件箱位置"时误触删除 */
+  .play-body > .param-panel .param-title {
+    order: -2;
+  }
+  .play-body > .param-panel .param-actions {
+    order: -1;
   }
 
   /* 关卡目标面板 → 顶部卡片浮层（含其中的参数面板，随卡片一起滚动） */
