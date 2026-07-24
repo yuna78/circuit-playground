@@ -68,3 +68,34 @@ describe('导线布线（wirePath）', () => {
     }
   });
 });
+
+describe('变阻器 P 端子（朝上）布线', () => {
+  it('P 端子位置随滑片移动，导线从 P 向上离开', () => {
+    const rh = makeComponent('rheostat', 10, 10, 0);
+    rh.state.slider = 0.25;
+    const b = makeComponent('resistor', 8, 2, 0);
+    const d: CircuitDoc = {
+      components: [rh, b],
+      wires: [{ id: newId('w'), a: { comp: rh.id, t: 2 }, b: { comp: b.id, t: 1 } }],
+    };
+    const pts = wirePathPoints(d, d.wires[0]);
+    // 起点 = P 端子（网格 x = 10 + 0.25×4 = 11 → 176px；y = 10 − 1.5 = 8.5 → 136px）
+    expect(pts[0].x).toBeCloseTo(176, 1);
+    expect(pts[0].y).toBeCloseTo(136, 1);
+    // 首段沿 P 朝向（向上，y 减小）离开
+    expect(pts[1].y).toBeLessThan(pts[0].y);
+    expect(hasBacktrack(pts)).toBe(false);
+  });
+
+  it('滑片移动后 P 端子 x 跟随变化', () => {
+    const rh = makeComponent('rheostat', 10, 10, 0);
+    rh.state.slider = 0.75;
+    const b = makeComponent('resistor', 8, 2, 0);
+    const d: CircuitDoc = {
+      components: [rh, b],
+      wires: [{ id: newId('w'), a: { comp: rh.id, t: 2 }, b: { comp: b.id, t: 1 } }],
+    };
+    const pts = wirePathPoints(d, d.wires[0]);
+    expect(pts[0].x).toBeCloseTo((10 + 0.75 * 4) * 16, 1); // 208px
+  });
+});

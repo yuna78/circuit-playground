@@ -1,7 +1,7 @@
 /** 导线正交折线布线（画布渲染与电流小点动画共用） */
 
 import type { CircuitDoc, ComponentInstance, Wire } from '../model/types';
-import { terminalPos } from '../model/registry';
+import { REGISTRY, terminalPos } from '../model/registry';
 import { GRID } from './const';
 
 export interface Pt {
@@ -9,9 +9,9 @@ export interface Pt {
   y: number;
 }
 
-/** 端子朝外方向（网格单位）：端子 0 在元件左侧朝外为 −x，端子 1 在右侧朝外为 +x，随旋转变换 */
+/** 端子朝外方向（网格单位）：取注册表端子声明的 dir（如变阻器 P 朝上），随旋转变换 */
 function terminalDir(c: ComponentInstance, t: number): Pt {
-  const local: Pt = t === 0 ? { x: -1, y: 0 } : { x: 1, y: 0 };
+  const local: Pt = REGISTRY[c.type].terminals[t]?.dir ?? { x: 1, y: 0 };
   switch (c.rot) {
     case 0:
       return local;

@@ -68,8 +68,10 @@ export interface Netlist {
   nodeOf: Map<string, string>;
   /** 短路 / 电压源回路冲突信息，null = 无 */
   short: ShortInfo | null;
-  /** 元件 id → 主支路索引（电池指电压源支路；开关/导线无支路） */
+  /** 元件 id → 主支路索引（电池指电压源支路；开关/导线无支路；变阻器指 A–P 段） */
   branchOfComp: Map<string, number>;
+  /** 变阻器 id → 两段支路索引（A–P / P–B；某段两端并接时为 null） */
+  rheostatBranches: Map<string, { ap: number | null; pb: number | null }>;
 }
 
 const t0 = (c: ComponentInstance) => terminalKey({ comp: c.id, t: 0 });
@@ -85,10 +87,7 @@ export function resistanceOf(c: ComponentInstance): number | null {
       const { ratedV, ratedP } = c.params;
       return (ratedV * ratedV) / ratedP;
     }
-    case 'rheostat': {
-      const slider = c.state.slider ?? 0.5;
-      return Math.max(RHEOSTAT_MIN_R, slider * c.params.Rmax);
-    }
+    // rheostat 不在此表：三接线柱模型在 compile() 中展开为 A–P / P–B 两条支路
     case 'voltmeter':
       return VOLTMETER_R;
     case 'fuse':
@@ -144,6 +143,7 @@ export function compile(doc: CircuitDoc): Netlist {
   // 3) 组装支路
   const branches: Branch[] = [];
   const branchOfComp = new Map<string, number>();
+  const rheostatBranches = new Map<string, { ap: number | null; pb: number | null }>();
   const nodeOf = new Map<string, string>();
 
   for (const c of doc.components) {
@@ -151,6 +151,31 @@ export function compile(doc: CircuitDoc): Netlist {
     const nb = uf.find(t1(c));
     nodeOf.set(t0(c), na);
     nodeOf.set(t1(c), nb);
+
+    if (c.type === 'rheostat') {
+      // 三接线柱：滑片 P（t2）把电阻丝分成 A–P 与 P–B 两段，各成一条电阻支路。
+      // 悬空段由 MNA 自然得电流 0；某段两端被导线并接（节点相同）则该段不进方程。
+      const k2 = terminalKey({ comp: c.id, t: 2 });
+      const np = uf.find(k2);
+      nodeOf.set(k2, np);
+      const s = Math.min(1, Math.max(0, c.state.slider ?? 0.5));
+      const rAP = Math.max(RHEOSTAT_MIN_R, s * c.params.Rmax);
+      const rPB = Math.max(RHEOSTAT_MIN_R, (1 - s) * c.params.Rmax);
+      let ap: number | null = null;
+      let pb: number | null = null;
+      if (na !== np) {
+        ap = branches.length;
+        branches.push({ kind: 'resistor', owner: `${c.id}#ap`, nodeA: na, nodeB: np, R: rAP });
+      }
+      if (np !== nb) {
+        pb = branches.length;
+        branches.push({ kind: 'resistor', owner: `${c.id}#pb`, nodeA: np, nodeB: nb, R: rPB });
+      }
+      if (ap !== null) branchOfComp.set(c.id, ap);
+      else if (pb !== null) branchOfComp.set(c.id, pb);
+      rheostatBranches.set(c.id, { ap, pb });
+      continue;
+    }
 
     if (c.type === 'battery') {
       if (isShort && short.batteryIds.includes(c.id)) continue; // 短路电池不进方程
@@ -179,7 +204,7 @@ export function compile(doc: CircuitDoc): Netlist {
     }
   }
 
-  return { branches, nodeOf, short: isShort ? short : null, branchOfComp };
+  return { branches, nodeOf, short: isShort ? short : null, branchOfComp, rheostatBranches };
 }
 
 export { BULB_BLOW_FACTOR };

@@ -14,12 +14,22 @@ import { BULB_BLOW_FACTOR } from '../model/registry';
 import { compile, type ShortInfo } from './netlist';
 import { solveMna } from './mna';
 
+export interface RheostatSection {
+  /** 段电压（沿电流正方向：A→P / P→B） */
+  U: number;
+  /** 段电流（A→P / P→B 为正） */
+  I: number;
+  P: number;
+  /** 段阻值 */
+  R: number;
+}
+
 export interface ComponentResult {
-  /** 贯穿电流（t0→t1 为正） */
+  /** 贯穿电流（t0→t1 为正；变阻器为两段中电流较大一段的值） */
   I: number;
   /** 端电压 V(t0) − V(t1) */
   U: number;
-  /** 功率（耗能为正） */
+  /** 功率（耗能为正；变阻器为两段功率之和） */
   P: number;
   /** 未接入任何带电源的回路 */
   unpowered: boolean;
@@ -27,6 +37,10 @@ export interface ComponentResult {
   reading?: number;
   /** 灯泡亮度 0..1（实际功率/额定功率，截断） */
   brightness?: number;
+  /** 变阻器两段（[A–P, P–B]），仅 rheostat 有 */
+  sections?: [RheostatSection, RheostatSection];
+  /** 变阻器接入阻值：恰有一段通电流时 = 该段阻值（限流接法）；分压时 undefined */
+  rIn?: number;
 }
 
 export interface SolveResult {
@@ -82,6 +96,37 @@ export function solve(doc: CircuitDoc): SolveResult {
       energized.set(k1, isEnergized(k1));
 
       const U = nodePot(k0) - nodePot(k1);
+
+      if (c.type === 'rheostat') {
+        // 三接线柱：分别算 A–P / P–B 两段（悬空段电流自然为 0）
+        const k2 = terminalKey({ comp: c.id, t: 2 });
+        potentials.set(k2, nodePot(k2));
+        energized.set(k2, isEnergized(k2));
+        const s = Math.min(1, Math.max(0, c.state.slider ?? 0.5));
+        const rb = net.rheostatBranches.get(c.id);
+        const section = (idx: number | null, uSec: number, r: number): RheostatSection => {
+          if (idx === null) return { U: 0, I: 0, P: 0, R: r }; // 两端并接：段被导线短接
+          return { U: uSec, I: uSec / (net.branches[idx] as { R: number }).R, P: (uSec * uSec) / (net.branches[idx] as { R: number }).R, R: (net.branches[idx] as { R: number }).R };
+        };
+        const uAP = nodePot(k0) - nodePot(k2);
+        const uPB = nodePot(k2) - nodePot(k1);
+        const ap = section(rb?.ap ?? null, uAP, s * c.params.Rmax);
+        const pb = section(rb?.pb ?? null, uPB, (1 - s) * c.params.Rmax);
+        const EPS = 1e-6;
+        const liveAP = Math.abs(ap.I) > EPS;
+        const livePB = Math.abs(pb.I) > EPS;
+        const res: ComponentResult = {
+          I: Math.abs(ap.I) >= Math.abs(pb.I) ? ap.I : pb.I,
+          U,
+          P: ap.P + pb.P,
+          unpowered: !isEnergized(k0) && !isEnergized(k1) && !isEnergized(k2),
+          sections: [ap, pb],
+          rIn: liveAP && !livePB ? ap.R : livePB && !liveAP ? pb.R : undefined,
+        };
+        perComponent.set(c.id, res);
+        continue;
+      }
+
       let I = 0;
       const brIdx = net.branchOfComp.get(c.id);
       if (brIdx !== undefined) {
@@ -166,7 +211,16 @@ function computeWireCurrents(
   for (const c of doc.components) {
     if (c.type === 'switch') continue; // 开关自身是边，不是注入
     const r = perComponent.get(c.id);
-    if (!r || r.I === 0) continue;
+    if (!r) continue;
+    if (c.type === 'rheostat' && r.sections) {
+      // 三端子注入：A 吸入 I_ap，P 收 I_ap 放 I_pb，B 流出 I_pb
+      const [ap, pb] = r.sections;
+      addInj(terminalKey({ comp: c.id, t: 0 }), -ap.I);
+      addInj(terminalKey({ comp: c.id, t: 2 }), ap.I - pb.I);
+      addInj(terminalKey({ comp: c.id, t: 1 }), +pb.I);
+      continue;
+    }
+    if (r.I === 0) continue;
     addInj(terminalKey({ comp: c.id, t: 0 }), -r.I);
     addInj(terminalKey({ comp: c.id, t: 1 }), +r.I);
   }

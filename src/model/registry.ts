@@ -19,6 +19,10 @@ export interface TerminalDef {
   dy: number;
   /** 极性标注：'+' | '-' | ''（电池、电表有极性） */
   polarity: '+' | '-' | '';
+  /** 端子朝外方向（rot=0 局部系），布线让导线顺此方向离开元件 */
+  dir: { x: number; y: number };
+  /** 位置随滑片移动：dx 失效，局部 x = slider × span（滑动变阻器 P 端子） */
+  slides?: boolean;
 }
 
 export interface ComponentDef {
@@ -42,8 +46,8 @@ export const REGISTRY: Record<ComponentType, ComponentDef> = {
     span: SPAN,
     // 左端子为正极（电路图习惯：长线在左）
     terminals: [
-      { dx: 0, dy: 0, polarity: '+' },
-      { dx: SPAN, dy: 0, polarity: '-' },
+      { dx: 0, dy: 0, polarity: '+', dir: { x: -1, y: 0 } },
+      { dx: SPAN, dy: 0, polarity: '-', dir: { x: 1, y: 0 } },
     ],
     params: [
       { key: 'emf', label: '电动势', unit: 'V', min: 1.5, max: 12, step: 1.5, default: 3 },
@@ -56,8 +60,8 @@ export const REGISTRY: Record<ComponentType, ComponentDef> = {
     name: '灯泡',
     span: SPAN,
     terminals: [
-      { dx: 0, dy: 0, polarity: '' },
-      { dx: SPAN, dy: 0, polarity: '' },
+      { dx: 0, dy: 0, polarity: '', dir: { x: -1, y: 0 } },
+      { dx: SPAN, dy: 0, polarity: '', dir: { x: 1, y: 0 } },
     ],
     // 课本口径 "2.5V 0.75W"（≈0.3A），接 1~2 节干电池可正常点亮
     params: [
@@ -71,8 +75,8 @@ export const REGISTRY: Record<ComponentType, ComponentDef> = {
     name: '定值电阻',
     span: SPAN,
     terminals: [
-      { dx: 0, dy: 0, polarity: '' },
-      { dx: SPAN, dy: 0, polarity: '' },
+      { dx: 0, dy: 0, polarity: '', dir: { x: -1, y: 0 } },
+      { dx: SPAN, dy: 0, polarity: '', dir: { x: 1, y: 0 } },
     ],
     params: [{ key: 'R', label: '阻值', unit: 'Ω', min: 1, max: 100, step: 1, default: 10 }],
     initialState: () => ({}),
@@ -81,9 +85,11 @@ export const REGISTRY: Record<ComponentType, ComponentDef> = {
     type: 'rheostat',
     name: '滑动变阻器',
     span: SPAN,
+    // 课本三接线柱：A（左下）、B（右下）、P（滑片，位置随 slider 移动，朝上接线）
     terminals: [
-      { dx: 0, dy: 0, polarity: '' },
-      { dx: SPAN, dy: 0, polarity: '' },
+      { dx: 0, dy: 0, polarity: '', dir: { x: -1, y: 0 } },
+      { dx: SPAN, dy: 0, polarity: '', dir: { x: 1, y: 0 } },
+      { dx: SPAN / 2, dy: -1.5, polarity: '', dir: { x: 0, y: -1 }, slides: true },
     ],
     params: [{ key: 'Rmax', label: '最大阻值', unit: 'Ω', min: 5, max: 200, step: 5, default: 20 }],
     initialState: () => ({ slider: 0.5 }),
@@ -93,8 +99,8 @@ export const REGISTRY: Record<ComponentType, ComponentDef> = {
     name: '开关',
     span: SPAN,
     terminals: [
-      { dx: 0, dy: 0, polarity: '' },
-      { dx: SPAN, dy: 0, polarity: '' },
+      { dx: 0, dy: 0, polarity: '', dir: { x: -1, y: 0 } },
+      { dx: SPAN, dy: 0, polarity: '', dir: { x: 1, y: 0 } },
     ],
     params: [],
     initialState: () => ({ closed: false }),
@@ -104,8 +110,8 @@ export const REGISTRY: Record<ComponentType, ComponentDef> = {
     name: '电压表',
     span: SPAN,
     terminals: [
-      { dx: 0, dy: 0, polarity: '+' },
-      { dx: SPAN, dy: 0, polarity: '-' },
+      { dx: 0, dy: 0, polarity: '+', dir: { x: -1, y: 0 } },
+      { dx: SPAN, dy: 0, polarity: '-', dir: { x: 1, y: 0 } },
     ],
     params: [],
     initialState: () => ({}),
@@ -115,8 +121,8 @@ export const REGISTRY: Record<ComponentType, ComponentDef> = {
     name: '电流表',
     span: SPAN,
     terminals: [
-      { dx: 0, dy: 0, polarity: '+' },
-      { dx: SPAN, dy: 0, polarity: '-' },
+      { dx: 0, dy: 0, polarity: '+', dir: { x: -1, y: 0 } },
+      { dx: SPAN, dy: 0, polarity: '-', dir: { x: 1, y: 0 } },
     ],
     params: [],
     initialState: () => ({}),
@@ -126,8 +132,8 @@ export const REGISTRY: Record<ComponentType, ComponentDef> = {
     name: '保险丝',
     span: SPAN,
     terminals: [
-      { dx: 0, dy: 0, polarity: '' },
-      { dx: SPAN, dy: 0, polarity: '' },
+      { dx: 0, dy: 0, polarity: '', dir: { x: -1, y: 0 } },
+      { dx: SPAN, dy: 0, polarity: '', dir: { x: 1, y: 0 } },
     ],
     params: [{ key: 'ratedI', label: '额定电流', unit: 'A', min: 0.5, max: 10, step: 0.5, default: 1 }],
     initialState: () => ({ blown: false }),
@@ -156,10 +162,12 @@ export function makeComponent(type: ComponentType, x: number, y: number, rot: Ro
   return { id: newId(type), type, x, y, rot, params, state: def.initialState() };
 }
 
-/** 端子的绝对网格坐标（考虑旋转） */
+/** 端子的绝对网格坐标（考虑旋转）。滑动端子（变阻器 P）的局部 x 随 slider 连续变化 */
 export function terminalPos(c: ComponentInstance, t: number): { x: number; y: number } {
   const def = REGISTRY[c.type];
-  const { dx, dy } = def.terminals[t];
+  const td = def.terminals[t];
+  const dx = td.slides ? (c.state.slider ?? 0.5) * def.span : td.dx;
+  const dy = td.dy;
   switch (c.rot) {
     case 0:
       return { x: c.x + dx, y: c.y + dy };

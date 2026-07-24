@@ -314,14 +314,78 @@ describe('过载熔断', () => {
   });
 });
 
-describe('滑动变阻器', () => {
-  it('滑片位置改变阻值：中点 = Rmax/2', () => {
+describe('滑动变阻器（三接线柱）', () => {
+  it('限流接法 A–P：接入阻值 = s·Rmax，悬空段电流为 0', () => {
     const { doc, add, connect } = builder();
     const bat = add('battery', { emf: 6, r: 0 });
     const rh = add('rheostat', { Rmax: 20 }, { slider: 0.5 });
+    connect(bat, 0, rh, 0); // 电池 → A
+    connect(rh, 2, bat, 1); // P → 电池（B 悬空）
+    const res = solve(doc);
+    const r = res.perComponent.get(rh.id)!;
+    approx(r.I, 0.6); // 6V / (0.5×20Ω) = 0.6A
+    approx(r.sections![0].I, 0.6); // A–P 段通电
+    approx(r.sections![1].I, 0); // P–B 段悬空，电流恰为 0
+    approx(r.rIn!, 10); // 接入阻值 = 10Ω
+  });
+
+  it('接 A–B：定值 Rmax，滑片位置无关', () => {
+    for (const s of [0.2, 0.5, 0.8]) {
+      const { doc, add, connect } = builder();
+      const bat = add('battery', { emf: 6, r: 0 });
+      const rh = add('rheostat', { Rmax: 20 }, { slider: s });
+      connect(bat, 0, rh, 0);
+      connect(rh, 1, bat, 1); // A–B，P 悬空 → 两段串联恒为 Rmax
+      const res = solve(doc);
+      const r = res.perComponent.get(rh.id)!;
+      approx(r.I, 0.3, 1e-6); // 6V / 20Ω，与 s 无关
+      approx(r.sections![0].U + r.sections![1].U, 6, 1e-6); // 两段分压和 = 总压
+    }
+  });
+
+  it('分压接法（课本例题）：电压表测 P–B 段，读数 ≈ (1−s)·U', () => {
+    const { doc, add, connect } = builder();
+    const bat = add('battery', { emf: 6, r: 0 });
+    const rh = add('rheostat', { Rmax: 20 }, { slider: 0.5 });
+    const vm = add('voltmeter');
+    connect(bat, 0, rh, 0); // 电源 → A
+    connect(rh, 1, bat, 1); // B → 电源（A–B 全接入）
+    connect(vm, 0, rh, 2); // 电压表并在 P–B 段
+    connect(vm, 1, rh, 1);
+    const res = solve(doc);
+    approx(res.perComponent.get(vm.id)!.reading!, 3, 1e-4); // 6 × (1−0.5) = 3V
+    const r = res.perComponent.get(rh.id)!;
+    approx(r.sections![0].U + r.sections![1].U, 6, 1e-4); // 基尔霍夫校验
+  });
+
+  it('分压带阻性负载：KCL 在 P 点成立（手算精确解）', () => {
+    // 6V，s=0.5，Rmax=20：A–P=10Ω；P–B(10Ω) ∥ 负载(10Ω)=5Ω
+    // 总 15Ω → I_AP=0.4A；V_PB=2V → I_PB=0.2A，I_负载=0.2A
+    const { doc, add, connect } = builder();
+    const bat = add('battery', { emf: 6, r: 0 });
+    const rh = add('rheostat', { Rmax: 20 }, { slider: 0.5 });
+    const load = add('resistor', { R: 10 });
     connect(bat, 0, rh, 0);
     connect(rh, 1, bat, 1);
+    connect(load, 0, rh, 2); // 负载并在 P–B 段
+    connect(load, 1, rh, 1);
     const res = solve(doc);
-    approx(res.perComponent.get(rh.id)!.I, 0.6); // 6V / 10Ω
+    const r = res.perComponent.get(rh.id)!;
+    approx(r.sections![0].I, 0.4, 1e-9);
+    approx(r.sections![1].I, 0.2, 1e-9);
+    approx(res.perComponent.get(load.id)!.I, 0.2, 1e-9);
+    expect(r.rIn).toBeUndefined(); // 两段皆通电 → 分压，无单一"接入阻值"
+  });
+
+  it('滑片在最左端（s=0）限流接法：接入阻值≈0，电流达最大', () => {
+    const { doc, add, connect } = builder();
+    const bat = add('battery', { emf: 6, r: 0 });
+    const r1 = add('resistor', { R: 10 });
+    const rh = add('rheostat', { Rmax: 20 }, { slider: 0 });
+    connect(bat, 0, r1, 0);
+    connect(r1, 1, rh, 0);
+    connect(rh, 2, bat, 1);
+    const res = solve(doc);
+    approx(res.perComponent.get(r1.id)!.I, 6 / 10.05, 1e-6); // 10Ω + 残余 0.05Ω
   });
 });
