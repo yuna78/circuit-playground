@@ -22,6 +22,13 @@ export const PALETTE = {
   heat: '#FF5A36',
 } as const;
 
+/** 电流小点（流动动画）——电光青蓝，与金色端子明确区分；内核小于端子圆点(r=4.4) */
+export const DOT_CORE = '#3ED0F0';
+export const DOT_CORE_STROKE = '#1893B8';
+export const DOT_HALO = '#7FE3FA';
+export const DOT_CORE_R = 2.6;
+export const DOT_HALO_R = 5;
+
 /** 电势梯度着色：t ∈ [0,1]（0 = 最低电势，1 = 最高），未接通传 null */
 export function potentialColor(t: number | null): string {
   if (t === null) return '#9AA0A6';
