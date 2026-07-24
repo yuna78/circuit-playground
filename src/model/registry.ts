@@ -39,6 +39,13 @@ export interface ComponentDef {
 
 const SPAN = 4;
 
+/** 变阻器滑片（P 端子）滑动范围：局部 x = RHEO_P_MIN + slider × RHEO_P_RANGE（网格单位）。
+ *  与美术的滑轨几何一致（8px..56px），端子圆点始终落在滑钮正上方 */
+export const RHEO_P_MIN = 0.5;
+export const RHEO_P_RANGE = 3;
+/** P 端子距导线基线的高度（网格单位，朝上为负） */
+export const RHEO_P_DY = -1.5;
+
 export const REGISTRY: Record<ComponentType, ComponentDef> = {
   battery: {
     type: 'battery',
@@ -89,7 +96,7 @@ export const REGISTRY: Record<ComponentType, ComponentDef> = {
     terminals: [
       { dx: 0, dy: 0, polarity: '', dir: { x: -1, y: 0 } },
       { dx: SPAN, dy: 0, polarity: '', dir: { x: 1, y: 0 } },
-      { dx: SPAN / 2, dy: -1.5, polarity: '', dir: { x: 0, y: -1 }, slides: true },
+      { dx: SPAN / 2, dy: RHEO_P_DY, polarity: '', dir: { x: 0, y: -1 }, slides: true },
     ],
     params: [{ key: 'Rmax', label: '最大阻值', unit: 'Ω', min: 5, max: 200, step: 5, default: 20 }],
     initialState: () => ({ slider: 0.5 }),
@@ -166,7 +173,8 @@ export function makeComponent(type: ComponentType, x: number, y: number, rot: Ro
 export function terminalPos(c: ComponentInstance, t: number): { x: number; y: number } {
   const def = REGISTRY[c.type];
   const td = def.terminals[t];
-  const dx = td.slides ? (c.state.slider ?? 0.5) * def.span : td.dx;
+  const s = Math.min(1, Math.max(0, c.state.slider ?? 0.5));
+  const dx = td.slides ? RHEO_P_MIN + s * RHEO_P_RANGE : td.dx;
   const dy = td.dy;
   switch (c.rot) {
     case 0:

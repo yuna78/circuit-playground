@@ -56,10 +56,17 @@ describe('导线布线（wirePath）', () => {
     expect(pts).toHaveLength(2);
   });
 
-  it('混合朝向（一横一竖）：不回头且正交', () => {
-    const { d, w } = doc2(10, 6, 0, 16, 18, 90); // B 旋转 90° → 端子朝向变竖直
+  it('混合朝向（一横一竖）：两端顺着朝向离开且全程正交', () => {
+    // A (10,6) rot0 t0 朝左；B (16,18) rot90 t0 朝上——目标在 A 朝向的反侧，
+    // 必须先沿朝向引出再绕行（不许穿过元件本体），此时"折返"是几何必然
+    const { d, w } = doc2(10, 6, 0, 16, 18, 90);
     const pts = wirePathPoints(d, w);
-    expect(hasBacktrack(pts)).toBe(false);
+    // A 端首段向左离开（顺 dir）
+    expect(pts[1].x).toBeLessThan(pts[0].x);
+    // B 端末段从上方进入（顺 dir：离开 B 是向上）
+    const last = pts[pts.length - 1];
+    const prev = pts[pts.length - 2];
+    expect(prev.y).toBeLessThan(last.y);
     // 全部为水平/竖直段
     for (let i = 1; i < pts.length; i++) {
       const horiz = Math.abs(pts[i].y - pts[i - 1].y) < 0.01;
@@ -79,12 +86,17 @@ describe('变阻器 P 端子（朝上）布线', () => {
       wires: [{ id: newId('w'), a: { comp: rh.id, t: 2 }, b: { comp: b.id, t: 1 } }],
     };
     const pts = wirePathPoints(d, d.wires[0]);
-    // 起点 = P 端子（网格 x = 10 + 0.25×4 = 11 → 176px；y = 10 − 1.5 = 8.5 → 136px）
-    expect(pts[0].x).toBeCloseTo(176, 1);
+    // 起点 = P 端子（网格 x = 10 + 0.5 + 3×0.25 = 11.25 → 180px；y = 10 − 1.5 = 8.5 → 136px）
+    expect(pts[0].x).toBeCloseTo(180, 1);
     expect(pts[0].y).toBeCloseTo(136, 1);
-    // 首段沿 P 朝向（向上，y 减小）离开
+    // 首段沿 P 朝向（向上，y 减小）离开——绝不向下穿过变阻器本体
     expect(pts[1].y).toBeLessThan(pts[0].y);
-    expect(hasBacktrack(pts)).toBe(false);
+    // 全程正交
+    for (let i = 1; i < pts.length; i++) {
+      const horiz = Math.abs(pts[i].y - pts[i - 1].y) < 0.01;
+      const vert = Math.abs(pts[i].x - pts[i - 1].x) < 0.01;
+      expect(horiz || vert).toBe(true);
+    }
   });
 
   it('滑片移动后 P 端子 x 跟随变化', () => {
@@ -96,6 +108,6 @@ describe('变阻器 P 端子（朝上）布线', () => {
       wires: [{ id: newId('w'), a: { comp: rh.id, t: 2 }, b: { comp: b.id, t: 1 } }],
     };
     const pts = wirePathPoints(d, d.wires[0]);
-    expect(pts[0].x).toBeCloseTo((10 + 0.75 * 4) * 16, 1); // 208px
+    expect(pts[0].x).toBeCloseTo((10 + 0.5 + 3 * 0.75) * 16, 1); // 204px
   });
 });

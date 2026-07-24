@@ -158,28 +158,47 @@ export function ResistorArt({ overheat }: { overheat: boolean }) {
 }
 
 /* ================= 滑动变阻器 ================= */
-export function RheostatArt({ slider }: { slider: number }) {
-  const knobX = 12 + slider * 40; // 12..52
+export function RheostatArt({
+  slider,
+  liveAP = false,
+  livePB = false,
+}: {
+  slider: number;
+  /** A–P 段 / P–B 段是否有电流（接入段高亮） */
+  liveAP?: boolean;
+  livePB?: boolean;
+}) {
+  const s = Math.min(1, Math.max(0, slider));
+  // 滑钮中心与 P 端子共用同一映射：8..56px（= 网格 0.5 + 3s，见 registry RHEO_P_*）
+  const knobX = 8 + s * 48;
+  const liveColor = P.orange;
+  const deadColor = '#22394C';
   return (
     <g>
       <Leads x1={7} x2={57} />
       <rect x={6} y={-9} width={52} height={18} rx={8} fill={P.navy} />
       <rect x={6} y={-9} width={52} height={18} rx={8} fill="url(#clay-hl)" />
-      {/* 滑槽与刻度 */}
-      <rect x={13} y={-3.2} width={38} height={6.4} rx={3.2} fill="#22394C" />
+      {/* 电阻丝：被滑片分成两段，接入（有电流）段亮橙、未用段暗色 */}
+      <rect x={9} y={-3.2} width={Math.max(0, knobX - 9)} height={6.4} rx={3.2} fill={liveAP ? liveColor : deadColor} />
+      <rect x={knobX} y={-3.2} width={Math.max(0, 55 - knobX)} height={6.4} rx={3.2} fill={livePB ? liveColor : deadColor} />
+      {/* 刻度 */}
       <g stroke="#C6D2DC" strokeWidth="1" opacity="0.8">
         {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
           <line key={i} x1={15 + i * 4.3} y1={6} x2={15 + i * 4.3} y2={8.4} />
         ))}
       </g>
-      {/* 金色端钮 */}
+      {/* 顶部滑轨（P 端子沿它左右移动） */}
+      <line x1={8} y1={-19} x2={56} y2={-19} stroke={P.silverDeep} strokeWidth={2.6} strokeLinecap="round" />
+      {/* 金色端钮 A / B */}
       <circle cx={8.5} cy={0} r={3.4} fill={P.gold} />
       <circle cx={55.5} cy={0} r={3.4} fill={P.gold} />
-      {/* 滑片旋钮（交互热区在画布层加大） */}
+      {/* 滑片：从触点跨到顶部滑轨，顶端连 P 端子（金色端子圆点由画布层绘制） */}
       <g data-role="rheostat-knob">
-        <rect x={knobX - 6} y={-16} width={12} height={17} rx={3.5} fill={P.dark} />
-        <rect x={knobX - 6} y={-16} width={12} height={17} rx={3.5} fill="url(#clay-hl)" />
-        <line x1={knobX} y1={-13} x2={knobX} y2={-6} stroke="#F4EAD5" strokeWidth="1.6" strokeLinecap="round" />
+        <rect x={knobX - 6} y={-19} width={12} height={20} rx={3.5} fill={P.dark} />
+        <rect x={knobX - 6} y={-19} width={12} height={20} rx={3.5} fill="url(#clay-hl)" />
+        {/* 滑片竖杆通向 P 端子（−24） */}
+        <line x1={knobX} y1={-24} x2={knobX} y2={-16} stroke={P.dark} strokeWidth={3.2} strokeLinecap="round" />
+        <line x1={knobX} y1={-15} x2={knobX} y2={-6} stroke="#F4EAD5" strokeWidth="1.6" strokeLinecap="round" />
       </g>
     </g>
   );

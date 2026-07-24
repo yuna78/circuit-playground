@@ -32,6 +32,25 @@ export function HoverCard() {
   const comp = doc.components.find((c) => c.id === hovered);
   const r = comp && result.perComponent.get(comp.id);
   if (!comp || !r) return null;
+  if (comp.type === 'rheostat' && r.sections) {
+    const [ap, pb] = r.sections;
+    const liveAP = Math.abs(ap.I) > 1e-6;
+    const livePB = Math.abs(pb.I) > 1e-6;
+    return (
+      <div className="hover-card">
+        <b>{REGISTRY[comp.type].name}</b>
+        {r.rIn !== undefined ? (
+          <span>接入 {fmt(r.rIn)} Ω / {comp.params.Rmax} Ω</span>
+        ) : liveAP && livePB ? (
+          <span>分压 · 总 {comp.params.Rmax} Ω</span>
+        ) : (
+          <span className="muted">未接入</span>
+        )}
+        {liveAP && <span>A–P {fmt(Math.abs(ap.U))}V·{fmt(Math.abs(ap.I))}A</span>}
+        {livePB && <span>P–B {fmt(Math.abs(pb.U))}V·{fmt(Math.abs(pb.I))}A</span>}
+      </div>
+    );
+  }
   return (
     <div className="hover-card">
       <b>{REGISTRY[comp.type].name}</b>

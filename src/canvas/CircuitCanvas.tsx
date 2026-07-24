@@ -9,7 +9,7 @@ import { useEffect, useRef, useState, type PointerEvent as RPointerEvent } from 
 import { create } from 'zustand';
 import type { CircuitDoc, ComponentInstance, ComponentType, TerminalRef } from '../model/types';
 import { terminalKey } from '../model/types';
-import { REGISTRY, terminalPos } from '../model/registry';
+import { REGISTRY, RHEO_P_MIN, RHEO_P_RANGE, terminalPos } from '../model/registry';
 import { useCircuitStore } from '../store/circuitStore';
 import { GRID, PALETTE, potentialColor } from './const';
 import {
@@ -43,11 +43,15 @@ interface ViewBox {
   scale: number; // px per svg-unit 倍率（1 = 原始）
 }
 
+/** 滑片手势分流阈值（px）：逾此距离才按首动方向定性为"滑动"或"拉线" */
+const RHEO_GESTURE_THRESHOLD = 6;
+
 type DragState =
   | { kind: 'pan'; startX: number; startY: number; vb: ViewBox }
   | { kind: 'move'; id: string; offX: number; offY: number }
   | { kind: 'wire'; from: TerminalRef; toX: number; toY: number; overTerminal: TerminalRef | null; startX: number; startY: number }
   | { kind: 'slider'; id: string }
+  | { kind: 'rheostatPending'; id: string; startX: number; startY: number }
   | { kind: 'wireMid'; id: string; axis: 'x' | 'y' }
   | null;
 
@@ -145,7 +149,14 @@ export function CircuitCanvas({ readOnly = false }: CanvasProps) {
     if (placing) return; // 放置模式：down 不处理，up 落子
 
     if (termComp && !readOnly) {
-      const from: TerminalRef = { comp: termComp, t: Number(target.getAttribute('data-term-idx')) };
+      const tIdx = Number(target.getAttribute('data-term-idx'));
+      const tc = doc.components.find((c) => c.id === termComp);
+      if (tc?.type === 'rheostat' && tIdx === 2) {
+        // P 端子与滑钮重叠：不立即定性，按首动方向分流（横=滑动，纵=拉线，轻点=选中）
+        setDrag({ kind: 'rheostatPending', id: termComp, startX: e.clientX, startY: e.clientY });
+        return;
+      }
+      const from: TerminalRef = { comp: termComp, t: tIdx };
       setDrag({ kind: 'wire', from, toX: p.x, toY: p.y, overTerminal: null, startX: e.clientX, startY: e.clientY });
       return;
     }
@@ -154,7 +165,7 @@ export function CircuitCanvas({ readOnly = false }: CanvasProps) {
       if (!comp) return;
       store.getState().select(compId);
       if (role === 'rheostat-knob' && comp.type === 'rheostat') {
-        setDrag({ kind: 'slider', id: compId });
+        setDrag({ kind: 'rheostatPending', id: compId, startX: e.clientX, startY: e.clientY });
         return;
       }
       // 记录按下，用于 pointerup 的"轻点"判定（开关切换）
@@ -220,12 +231,38 @@ export function CircuitCanvas({ readOnly = false }: CanvasProps) {
     } else if (drag.kind === 'wire') {
       const over = findTerminalAt(doc, p.x, p.y, drag.from);
       setDrag({ ...drag, toX: p.x, toY: p.y, overTerminal: over });
+    } else if (drag.kind === 'rheostatPending') {
+      // 首动方向分流（在元件局部坐标系里判定，兼容旋转）
+      const dx = e.clientX - drag.startX;
+      const dy = e.clientY - drag.startY;
+      if (Math.hypot(dx, dy) > RHEO_GESTURE_THRESHOLD) {
+        const comp = doc.components.find((c) => c.id === drag.id);
+        if (!comp) {
+          setDrag(null);
+          return;
+        }
+        const rad = (-comp.rot * Math.PI) / 180;
+        const lx = dx * Math.cos(rad) - dy * Math.sin(rad);
+        const ly = dx * Math.sin(rad) + dy * Math.cos(rad);
+        if (Math.abs(lx) >= Math.abs(ly)) {
+          // 沿滑轨方向 → 调阻值（并立即应用当前位置）
+          const local = toLocal(comp, p.x, p.y);
+          store.getState().setSlider(drag.id, (local.x - 8) / 48);
+          setDrag({ kind: 'slider', id: drag.id });
+        } else if (!readOnly) {
+          // 垂直滑轨方向 → 从 P 端子拉导线
+          const from: TerminalRef = { comp: drag.id, t: 2 };
+          setDrag({ kind: 'wire', from, toX: p.x, toY: p.y, overTerminal: null, startX: drag.startX, startY: drag.startY });
+        } else {
+          setDrag(null);
+        }
+      }
     } else if (drag.kind === 'slider') {
       const comp = doc.components.find((c) => c.id === drag.id);
       if (comp) {
-        // 元件本地 x：12..52 → slider 0..1（考虑旋转取局部坐标）
+        // 元件本地 x：滑轨 8..56px → slider 0..1（考虑旋转取局部坐标）
         const local = toLocal(comp, p.x, p.y);
-        store.getState().setSlider(drag.id, (local.x - 12) / 40);
+        store.getState().setSlider(drag.id, (local.x - 8) / 48);
       }
     } else if (drag.kind === 'wireMid') {
       // 拖动导线通道：沿轴吸附到网格，端点不动
@@ -251,6 +288,10 @@ export function CircuitCanvas({ readOnly = false }: CanvasProps) {
         // 点元件常落在端子命中圈上，不能让它无声无息什么都不发生
         store.getState().select(drag.from.comp);
       }
+    }
+    if (drag?.kind === 'rheostatPending') {
+      // 滑钮/P 端子上的轻点（未逾阈值）：选中变阻器
+      store.getState().select(drag.id);
     }
     // 轻点开关 = 切换通断（在 pointerup 显式处理，避免依赖被指针捕获吞掉的 onClick）
     const press = pressRef.current;
@@ -444,8 +485,17 @@ function ArtFor({ comp }: { comp: ComponentInstance }) {
       return <BulbArt brightness={r?.brightness ?? 0} blown={!!comp.state.blown} />;
     case 'resistor':
       return <ResistorArt overheat={Math.abs(r?.P ?? 0) > 5} />;
-    case 'rheostat':
-      return <RheostatArt slider={comp.state.slider ?? 0.5} />;
+    case 'rheostat': {
+      const EPS = 1e-6;
+      const secs = r?.sections;
+      return (
+        <RheostatArt
+          slider={comp.state.slider ?? 0.5}
+          liveAP={Math.abs(secs?.[0].I ?? 0) > EPS}
+          livePB={Math.abs(secs?.[1].I ?? 0) > EPS}
+        />
+      );
+    }
     case 'switch':
       return <SwitchArt closed={!!comp.state.closed} />;
     case 'voltmeter':
@@ -471,8 +521,6 @@ function ComponentView({
   const store = useCircuitStore;
   const viz = useCircuitStore((s) => s.viz);
   const def = REGISTRY[comp.type];
-  const k0 = terminalKey({ comp: comp.id, t: 0 });
-  const k1 = terminalKey({ comp: comp.id, t: 1 });
   void readOnly; // 交互（移动/开关）在画布指针处理里统一判定
 
   return (
@@ -500,27 +548,30 @@ function ComponentView({
         />
       )}
       <ArtFor comp={comp} />
-      {/* 端子 */}
+      {/* 端子（局部坐标；滑动端子 P 的 x 随 slider 移动） */}
       {def.terminals.map((td, i) => {
-        const key = i === 0 ? k0 : k1;
+        const key = terminalKey({ comp: comp.id, t: i });
         const t = potT(key);
         const fill = viz.potential ? potentialColor(t) : PALETTE.gold;
+        const s = Math.min(1, Math.max(0, comp.state.slider ?? 0.5));
+        const cx = (td.slides ? RHEO_P_MIN + s * RHEO_P_RANGE : td.dx) * GRID;
+        const cy = td.dy * GRID;
         return (
           <g key={i}>
             <circle
               data-term-comp={comp.id}
               data-term-idx={i}
-              cx={i === 0 ? 0 : GRID * 4}
-              cy={0}
+              cx={cx}
+              cy={cy}
               r={10}
               fill="transparent"
               style={{ cursor: 'crosshair' }}
             />
-            <circle cx={i === 0 ? 0 : GRID * 4} cy={0} r={4.4} fill={fill} stroke="#8a7340" strokeWidth={1.2} pointerEvents="none" />
+            <circle cx={cx} cy={cy} r={4.4} fill={fill} stroke="#8a7340" strokeWidth={1.2} pointerEvents="none" />
             {td.polarity && (
               <text
-                x={(i === 0 ? 0 : GRID * 4) + (i === 0 ? -9 : 9)}
-                y={-8}
+                x={cx + (i === 0 ? -9 : 9)}
+                y={cy - 8}
                 textAnchor="middle"
                 fontSize={10}
                 fontWeight={700}

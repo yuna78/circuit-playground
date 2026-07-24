@@ -79,14 +79,40 @@ export function ParamPanel() {
           🔧 修复烧毁元件
         </button>
       )}
-      {r && !r.unpowered && (
-        <div className="param-readout">
-          <span>电流 {fmt(Math.abs(r.I))} A</span>
-          <span>电压 {fmt(Math.abs(r.U))} V</span>
-          <span>功率 {fmt(Math.abs(r.P))} W</span>
-        </div>
+      {comp.type === 'rheostat' && r?.sections ? (
+        <>
+          <div className="param-readout">
+            {r.rIn !== undefined ? (
+              <span>接入 {fmt(r.rIn)} Ω / 总 {comp.params.Rmax} Ω（限流）</span>
+            ) : Math.abs(r.sections[0].I) > 1e-6 && Math.abs(r.sections[1].I) > 1e-6 ? (
+              <span>分压接法 · 总 {comp.params.Rmax} Ω</span>
+            ) : (
+              <span className="muted">未接入电路</span>
+            )}
+          </div>
+          {(Math.abs(r.sections[0].I) > 1e-6 || Math.abs(r.sections[1].I) > 1e-6) && (
+            <div className="param-readout">
+              <span>
+                A–P 段 {fmt(r.sections[0].R)}Ω · {fmt(Math.abs(r.sections[0].U))}V · {fmt(Math.abs(r.sections[0].I))}A
+              </span>
+              <span>
+                P–B 段 {fmt(r.sections[1].R)}Ω · {fmt(Math.abs(r.sections[1].U))}V · {fmt(Math.abs(r.sections[1].I))}A
+              </span>
+            </div>
+          )}
+        </>
+      ) : (
+        <>
+          {r && !r.unpowered && (
+            <div className="param-readout">
+              <span>电流 {fmt(Math.abs(r.I))} A</span>
+              <span>电压 {fmt(Math.abs(r.U))} V</span>
+              <span>功率 {fmt(Math.abs(r.P))} W</span>
+            </div>
+          )}
+          {r?.unpowered && <div className="param-readout muted">未接通</div>}
+        </>
       )}
-      {r?.unpowered && <div className="param-readout muted">未接通</div>}
       <div className="param-actions">
         {!comp.locked && (
           <>

@@ -88,8 +88,19 @@ export function wirePathPoints(doc: CircuitDoc, w: Wire): Pt[] {
       { x: x2, y: channelY },
     ];
   } else {
-    // 混合：拐点让 A 先顺自己的朝向走
-    mids = aH ? [{ x: x2, y: y1 }] : [{ x: x1, y: y2 }];
+    // 混合走向：优先单拐点 L 形，但两端都必须"顺着朝向"离开元件；
+    // 任一端逆向（导线会穿过元件本体，如变阻器 P 朝上而目标在下方）时，
+    // 改用带引出段的 Z 形：先沿朝向引出一格，再绕到对端的引出点。
+    const ok = aH
+      ? Math.sign(x2 - x1) === Math.sign(dA.x) && Math.sign(y1 - y2) === Math.sign(dB.y)
+      : Math.sign(y2 - y1) === Math.sign(dA.y) && Math.sign(x1 - x2) === Math.sign(dB.x);
+    if (ok) {
+      mids = aH ? [{ x: x2, y: y1 }] : [{ x: x1, y: y2 }];
+    } else {
+      const sa = { x: x1 + dA.x * GRID, y: y1 + dA.y * GRID };
+      const sb = { x: x2 + dB.x * GRID, y: y2 + dB.y * GRID };
+      mids = aH ? [sa, { x: sa.x, y: sb.y }, sb] : [sa, { x: sb.x, y: sa.y }, sb];
+    }
   }
 
   return dedupe([{ x: x1, y: y1 }, ...mids, { x: x2, y: y2 }]);

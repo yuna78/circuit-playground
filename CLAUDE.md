@@ -69,5 +69,6 @@ canvas/ + visualization/ (读 store 渲染)      │    · 短路预检测
 - **加新关卡**：只改 `levels/data.ts`。目标用 `Predicate` 声明；预置电路里 `locked: true` 的件不可动。`switch: '@any'` 表示"场上任一开关满足因果即可"（玩家自加的开关无固定 id）。
 - **加新目标类型**：在 `levels/types.ts` 的 `Predicate` 联合类型加一支，并在 `evaluate.ts` 的 switch 补一个 case（TS 会强制穷尽）。
 - **电压表**建模为 10MΩ 大内阻支路；**电流表**建模为 0V 电压源（其 MNA 电流变量即读数）。
+- **滑动变阻器是三接线柱**（课本口径）：A（t0）、B（t1）、P（t2，滑片）。编译成 A–P/P–B **两条支路**（一元件≠一支路的唯一特例），结果在 `perComponent.sections` + 接入阻值 `rIn`。P 端子位置随 `state.slider` 连续移动（`registry.ts` 的 `RHEO_P_*` 常量，与美术滑轨几何一致）；端子有 `dir` 朝向字段供布线用（P 朝上）。滑片手势按**首动方向分流**（横=调阻值、纵=从 P 拉线、轻点=选中，`RHEO_GESTURE_THRESHOLD`）。接 A–B = 定值 Rmax（陷阱题）、A–P/P–B = 限流、三点全接 = 分压。
 - **首发范围**：前 5 章（含滑动变阻器，初中必学）。第 6–8 章（电功率、电源内阻、动态分析）是 tasks.md 第 10 组的首发后增量。
 - 面向桌面/平板，窄于 768px 显示"请用平板或电脑"提示（`App.tsx` + CSS），不做手机小屏适配。

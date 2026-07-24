@@ -367,6 +367,7 @@ const L4_3: Level = {
   star2: [{ type: 'noBlown', label: '没有烧坏任何元件' }],
   hints: [
     '接法：电池 + → 电流表 → 电阻 R → 滑动变阻器 → 电池 −；电压表并在 R 两端。',
+    '滑动变阻器按课本"一上一下"接：用下面的接线柱 A（或 B）和滑片上的接线柱 P。',
     '滑动变阻器阻值变大 → 分走的电压多 → R 两端电压变小。反着拖就变大。',
     'U=2.0V 时 I=0.2A；U=IR，这就是欧姆定律！',
   ],
@@ -408,7 +409,11 @@ const L5_1: Level = {
   ]),
   goals: [{ type: 'brightnessRange', target: 'L1', min: 0.1, max: 0.4, label: '灯光调到柔和的暗光' }],
   star2: [{ type: 'noBlown', label: '没有烧坏任何元件' }],
-  hints: ['变阻器要串联在灯泡的电路里。', '按住滑片左右拖：电阻变大，灯变暗；电阻变小，灯变亮。'],
+  hints: [
+    '变阻器要串联进灯泡的电路，并且按"一上一下"接线：下面的接线柱接一个，滑片上的 P 接线柱接一个。',
+    '按住滑片左右拖：接入的电阻丝变长，灯变暗；变短，灯变亮。',
+    '如果接了下面两个接线柱（A 和 B），拖滑片灯不会变——想想为什么？',
+  ],
 };
 
 const L5_2: Level = {
@@ -428,7 +433,11 @@ const L5_2: Level = {
     { type: 'currentRange', target: 'RH1', min: 0.01, max: 10, label: '变阻器仍在电路中通电工作' },
   ],
   star2: [{ type: 'noBlown', label: '没有烧坏任何元件' }],
-  hints: ['把滑片拖到电阻最小的一端，变阻器几乎不"挡路"，灯就最亮。', '从最暗慢慢拖到最亮，观察电流小点的速度变化！'],
+  hints: [
+    '记得"一上一下"接线（下柱 + 滑片 P），滑片才起作用。',
+    '把滑片拖到接入电阻最小的一端，变阻器几乎不"挡路"，灯就最亮。',
+    '从最暗慢慢拖到最亮，观察电流小点的速度变化！',
+  ],
 };
 
 const L5_3: Level = {
@@ -449,8 +458,37 @@ const L5_3: Level = {
   ],
   star3: [{ type: 'brightnessRange', target: 'L1', min: 0.8, max: 1.0, label: '精细操作：调到接近正常最亮又不烧毁' }],
   hints: [
-    '先把滑片拖到电阻最大的一端，再接通电路——这是实验室的标准安全操作！',
+    '"一上一下"接好后，先把滑片拖到接入电阻最大的一端，再接通电路——这是实验室的标准安全操作！',
     '然后慢慢减小电阻，灯渐渐变亮。太贪心就会"砰"！',
+  ],
+};
+
+const L5_4: Level = {
+  id: 'c5-4',
+  chapter: 5,
+  index: 4,
+  title: '三个接线柱的秘密',
+  intro: '这个电路已经接好了——可是拖动滑片，灯的亮度纹丝不动！仔细看看接线：它接的是下面两个接线柱 A 和 B。改一改接线，让滑片真正管用，把灯调到最亮！',
+  palette: {},
+  preset: doc(
+    [
+      pc('bat1', 'battery', 6, 16, { locked: true }),
+      pc('L1', 'bulb', 2, 5, { locked: true }),
+      pc('RH1', 'rheostat', 12, 5, { locked: true }),
+    ],
+    [
+      // 故意的"A–B 陷阱"接法：接了两个下柱，滑片无效（导线可删除重接）
+      wire('pw1', 'bat1', 0, 'L1', 0),
+      wire('pw2', 'L1', 1, 'RH1', 0),
+      wire('pw3', 'RH1', 1, 'bat1', 1),
+    ],
+  ),
+  goals: [{ type: 'brightnessRange', target: 'L1', min: 0.85, max: 1, label: '改接线后把灯调到最亮' }],
+  star2: [{ type: 'noBlown', label: '没有烧坏任何元件' }],
+  hints: [
+    '先拖拖滑片试试——灯真的不变！因为接 A–B 时，不管滑片在哪，整根电阻丝都在电路里。',
+    '删掉一根接在下柱的导线，改接到滑片上的 P 接线柱（"一上一下"）。',
+    '现在滑片把电阻丝分成两段，只有一段接入电路——拖动滑片，接入的长度就变了！',
   ],
 };
 
@@ -461,7 +499,7 @@ export const CHAPTERS: Chapter[] = [
   { num: 2, title: '串联世界', subtitle: '一条路 · 分压 · 越串越暗', levels: [L2_1, L2_2, L2_3] },
   { num: 3, title: '并联世界', subtitle: '分岔路 · 各管各的 · 家庭电路', levels: [L3_1, L3_2, L3_3] },
   { num: 4, title: '欧姆定律与电表', subtitle: '测量 · U=IR', levels: [L4_1, L4_2, L4_3, L4_4] },
-  { num: 5, title: '滑动变阻器', subtitle: '调光 · 调速 · 保护电路', levels: [L5_1, L5_2, L5_3] },
+  { num: 5, title: '滑动变阻器', subtitle: '调光 · 调速 · 三个接线柱', levels: [L5_1, L5_2, L5_3, L5_4] },
 ];
 
 export function findLevel(id: string): Level | undefined {
